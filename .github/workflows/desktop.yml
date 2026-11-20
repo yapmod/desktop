@@ -41,10 +41,11 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: npm
+          cache: pnpm
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -64,8 +65,8 @@ jobs:
             gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
             gstreamer1.0-plugins-bad gstreamer1.0-nice gstreamer1.0-pulseaudio gstreamer1.0-libav
           for element in webrtcbin nicesrc opusdec vp8dec pulsesink; do gst-inspect-1.0 "$element" >/dev/null; done
-      - run: npm ci
-      - run: npm test
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
       - run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
       - name: Build packages
         env:
@@ -77,7 +78,7 @@ jobs:
         run: |
           : "${TAURI_SIGNING_PRIVATE_KEY:?Configure the signing key in GitHub Actions secrets}"
           python scripts/release.py config "$GITHUB_REF_NAME" ci-updater.json
-          npm run tauri -- build --ci --target "$TARGET" --bundles "$BUNDLES" --config ci-updater.json -- --locked
+          pnpm tauri build --ci --target "$TARGET" --bundles "$BUNDLES" --config ci-updater.json -- --locked
       - name: Create the styled disk image
         if: runner.os == 'macOS'
         run: |

@@ -33,13 +33,13 @@ Register the native notification backend without its global JavaScript polyfill.
 
 The desktop plugin uses `registerClientPlugin`, `api.settings.registerSection`, the client's UI components, and its storage API. Keep the plugin ID `client:yapmod-desktop` stable to preserve preferences. Test cleanup by disabling and re-enabling the plugin. Compatible installations share the `plugins-v1` update channel. Create a new channel for incompatible changes to the native bridge.
 
-The editable icon is `shell/yapmod.svg`. The shell and signed-in header use it directly. After editing it, run `npm run tauri -- icon shell/yapmod.svg --output <temporary-directory>` and copy the matching desktop PNG, ICO, and ICNS files into `src-tauri/icons/`.
+The editable icon is `shell/yapmod.svg`. The shell and signed-in header use it directly. After editing it, run `pnpm tauri icon shell/yapmod.svg --output <temporary-directory>` and copy the matching desktop PNG, ICO, and ICNS files into `src-tauri/icons/`.
 
 ## Verifying a change
 
 ```sh
-npm ci
-npm test
+pnpm install --frozen-lockfile
+pnpm test
 cargo fmt --manifest-path src-tauri/Cargo.toml --check
 cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 ```
@@ -50,8 +50,8 @@ Run the network test to verify that the app downloads the published client and c
 cargo test --locked --manifest-path src-tauri/Cargo.toml resolves_live_client -- --ignored
 ```
 
-After changing window or authentication behavior, run `npm run dev`. Sign in with a test account, restart the app to verify the session persists, and open **Settings → Yapmod → Desktop**. For Google sign-in, check that clicking the sign-in button opens a popup and that it returns control to Yapin. Check both the popup and the main Yapin console for requests to `ipc://localhost`. Check that the signed-in window has one branded title bar, that the next row begins immediately below it, and that the sign-in screen retains working window controls. On the affected OS, test minimizing, maximizing, resizing, and closing the window. With the app in the background, receive a message and click its notification. After packaging changes, build the package and open the installer.
+After changing window or authentication behavior, run `pnpm dev`. Sign in with a test account, restart the app to verify the session persists, and open **Settings → Yapmod → Desktop**. For Google sign-in, check that clicking the sign-in button opens a popup and that it returns control to Yapin. Check both the popup and the main Yapin console for requests to `ipc://localhost`. Check that the signed-in window has one branded title bar, that the next row begins immediately below it, and that the sign-in screen retains working window controls. On the affected OS, test minimizing, maximizing, resizing, and closing the window. With the app in the background, receive a message and click its notification. After packaging changes, build the package and open the installer.
 
 ## Publishing
 
-Run `scripts/release.py prepare` to synchronize npm and Cargo versions and their lockfiles. Record user-visible changes under `## Unreleased` in `CHANGELOG.md`. A stable `vX.Y.Z` tag builds the installers and publishes the manifest after signature verification. The **Publish desktop plugin** workflow can release the plugin independently. See the release guide for GitHub key configuration and recovery procedures. [Release guide](docs/release.md)
+Run `scripts/release.py prepare` to synchronize the app version in `package.json`, `Cargo.toml`, and `Cargo.lock`. Record user-visible changes under `## Unreleased` in `CHANGELOG.md`. A stable `vX.Y.Z` tag builds the installers and publishes the manifest after signature verification. The **Publish desktop plugin** workflow can release the plugin independently. See the release guide for GitHub key configuration and recovery procedures. [Release guide](docs/release.md)

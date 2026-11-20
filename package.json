@@ -5,6 +5,7 @@
   "description": "Yapin with the Yapmod client in a native desktop window",
   "license": "GPL-3.0-only",
   "type": "module",
+  "packageManager": "pnpm@12.10.1",
   "scripts": {
     "dev": "tauri dev",
     "build": "tauri build",

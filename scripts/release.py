@@ -46,7 +46,7 @@ def check_version(tag):
     crate = tomllib.loads((TAURI / "Cargo.toml").read_text())["package"]
     if tag != f"v{version}" or crate["version"] != version:
         raise ValueError(
-            f"Tag, npm and Cargo versions must match: {tag}, {version}, {crate['version']}"
+            f"Tag, package.json and Cargo versions must match: {tag}, {version}, {crate['version']}"
         )
     return version
 
@@ -58,7 +58,6 @@ def prepare(version):
     if tuple(map(int, version.split("."))) <= tuple(map(int, previous.split("."))):
         raise ValueError(f"Version must be newer than {previous}")
     changelog_section("Unreleased")
-    lock = read_json(ROOT / "package-lock.json")
     cargo_path = TAURI / "Cargo.toml"
     lock_path = TAURI / "Cargo.lock"
     cargo = cargo_path.read_text()
@@ -78,9 +77,8 @@ def prepare(version):
     log = log_path.read_text(encoding="utf-8").replace(
         "## Unreleased\n", f"## Unreleased\n\n## v{version}\n", 1
     )
-    package["version"] = lock["version"] = lock["packages"][""]["version"] = version
+    package["version"] = version
     write_json(ROOT / "package.json", package)
-    write_json(ROOT / "package-lock.json", lock)
     cargo_path.write_text(cargo)
     lock_path.write_text(locked)
     log_path.write_text(log, encoding="utf-8")

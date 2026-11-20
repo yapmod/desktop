@@ -29,18 +29,18 @@ The first client download requires a connection to GitHub. If the download fails
 
 ## Development
 
-Install Node.js 24 or later, stable Rust, and the Tauri prerequisites for your OS. macOS uses WebKit and Xcode, Windows uses WebView2 and the MSVC build tools, and Linux uses WebKitGTK 4.1. [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/)
+Install Node.js 24 or later, pnpm, stable Rust, and the Tauri prerequisites for your OS. The `packageManager` field in `package.json` pins the pnpm version. macOS uses WebKit and Xcode, Windows uses WebView2 and the MSVC build tools, and Linux uses WebKitGTK 4.1. [Install pnpm](https://pnpm.io/installation) · [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/)
 
 ```sh
-npm ci
-npm run dev
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
 | Command | Result |
 | --- | --- |
-| `npm test` | Runs the JavaScript and Rust tests for client startup, IPC, and desktop integration. |
-| `npm run build` | Builds the application and installers for the current platform. |
-| `npm run tauri -- build --bundles app` | Builds the macOS app bundle without creating a disk image. |
+| `pnpm test` | Runs the JavaScript and Rust tests for client startup, IPC, and desktop integration. |
+| `pnpm build` | Builds the application and installers for the current platform. |
+| `pnpm tauri build --bundles app` | Builds the macOS app bundle without creating a disk image. |
 
 Local packages are written to `src-tauri/target/release/bundle/`. Once you sign in, Yapin’s existing top bar displays the Yapmod logo and name. Mac window controls sit on its left and Windows caption buttons sit on its right. Linux uses the system window frame. The macOS disk image includes the original Yapmod artwork.
 
