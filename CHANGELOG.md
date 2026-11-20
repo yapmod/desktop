@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Add a Launch at login switch in Desktop settings (#1).
+
 ### Changed
 
 - Use Ubuntu's public archive for Linux CI packaging dependencies.
