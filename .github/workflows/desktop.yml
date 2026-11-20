@@ -61,7 +61,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev libxdo-dev libfuse2 patchelf xdg-utils \
-            libgstreamer-plugins-base1.0-dev gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+            gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
             gstreamer1.0-plugins-bad gstreamer1.0-nice gstreamer1.0-pulseaudio gstreamer1.0-libav
           for element in webrtcbin nicesrc opusdec vp8dec pulsesink; do gst-inspect-1.0 "$element" >/dev/null; done
       - run: npm ci
