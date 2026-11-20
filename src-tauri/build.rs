@@ -10,6 +10,25 @@ const COMMANDS: &[&str] = &[
 ];
 
 fn main() {
+    for path in [
+        "../plugin/src",
+        "../plugin/manifest.json",
+        "../scripts/build-plugin.mjs",
+        "../pnpm-lock.yaml",
+    ] {
+        println!("cargo:rerun-if-changed={path}");
+    }
+    let output = std::env::var_os("OUT_DIR").expect("Cargo sets OUT_DIR");
+    let status = std::process::Command::new("node")
+        .arg("../scripts/build-plugin.mjs")
+        .arg(output)
+        .status()
+        .expect("Node.js is required to build the Yapmod plugin");
+    assert!(
+        status.success(),
+        "Plugin build failed. Run pnpm install --frozen-lockfile before building."
+    );
+
     let manifest = tauri_build::AppManifest::new().commands(COMMANDS);
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(manifest))
         .expect("cannot prepare the desktop configuration");

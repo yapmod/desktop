@@ -25,8 +25,8 @@ const CLIENT_LIMIT: usize = 8 * 1024 * 1024;
 const PLUGIN_LIMIT: usize = 512 * 1024;
 const PROOF_LIMIT: usize = 8 * 1024;
 const RECHECK: Duration = Duration::from_secs(5 * 60);
-const EMBEDDED_PLUGIN: &str = include_str!("../../runtime/plugins/desktop.js");
-const BOOTSTRAP: &str = include_str!("../../runtime/bootstrap.js");
+const EMBEDDED_PLUGIN: &str = include_str!(concat!(env!("OUT_DIR"), "/desktop-plugins.js"));
+const BOOTSTRAP: &str = include_str!("../webview/bootstrap.js");
 
 #[derive(Clone)]
 pub struct BundleSet {

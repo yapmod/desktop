@@ -101,7 +101,7 @@ fn load_client(page: Webview) {
             }
             Err(error) => {
                 eprintln!("Could not load the Yapmod client: {error}");
-                let _ = page.eval(include_str!("../../runtime/unavailable.js"));
+                let _ = page.eval(include_str!("../webview/unavailable.js"));
             }
         }
     });

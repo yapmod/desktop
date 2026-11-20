@@ -23,7 +23,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: node --test
+      - run: pnpm test:js
       - name: Sign the plugin
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -32,7 +32,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y minisign
-          cp runtime/plugins/desktop.js desktop-plugins.js
+          cp plugin/dist/desktop-plugins.js desktop-plugins.js
           pnpm tauri signer sign desktop-plugins.js
           python3 scripts/release.py verify desktop-plugins.js
       - name: Refresh the plugin channel
