@@ -1,0 +1,17 @@
+{
+  "name": "yapmod-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Yapin with the Yapmod client in a native desktop window",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri",
+    "test": "node --test && cargo test --locked --manifest-path src-tauri/Cargo.toml"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.6"
+  }
+}

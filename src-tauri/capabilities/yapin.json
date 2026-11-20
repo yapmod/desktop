@@ -1,0 +1,23 @@
+{
+  "identifier": "yapin",
+  "description": "Desktop integration for the Yapin application.",
+  "local": false,
+  "remote": {
+    "urls": [
+      "https://www.yapin.gg/*",
+      "https://yapin.gg/*"
+    ]
+  },
+  "webviews": [
+    "yapin"
+  ],
+  "permissions": [
+    "allow-desktop-info",
+    "allow-desktop-update",
+    "allow-notification-permission",
+    "allow-desktop-notify",
+    "allow-desktop-close-notification",
+    "allow-window-caption",
+    "allow-set-integrated-titlebar"
+  ]
+}

@@ -1,0 +1,32 @@
+[package]
+name = "yapmod-desktop"
+version = "1.0.0"
+edition = "2024"
+license = "GPL-3.0-only"
+publish = false
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+base64 = "0.22"
+minisign-verify = "0.3"
+open = "5"
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider"] }
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+tauri = { version = "2.12", features = ["unstable"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-notification = "2.8"
+tauri-plugin-updater = "2.14"
+tempfile = "3"
+tokio = { version = "1", features = ["sync", "macros", "time"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-web-kit = { version = "0.3", default-features = false, features = ["WKWebViewConfiguration", "WKPreferences", "WKUIDelegate", "WKWebView"] }
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]

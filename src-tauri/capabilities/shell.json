@@ -1,0 +1,11 @@
+{
+  "identifier": "shell",
+  "description": "Local title bar and connection recovery.",
+  "webviews": [
+    "shell"
+  ],
+  "permissions": [
+    "allow-open-yapin",
+    "allow-window-caption"
+  ]
+}

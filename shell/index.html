@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Yapmod Desktop</title>
+    <link rel="stylesheet" href="./shell.css">
+    <link rel="stylesheet" href="./caption.css">
+    <script src="./caption.js" defer></script>
+    <script src="./shell.js" defer></script>
+  </head>
+  <body>
+    <header id="titlebar">
+      <div class="drag-area" id="drag-area">
+        <img class="window-icon" src="./yapmod.svg" alt="">
+        <span>Yapmod</span>
+      </div>
+    </header>
+    <main>
+      <img class="app-icon" src="./yapmod.svg" alt="">
+      <h1>Yapmod Desktop</h1>
+      <p role="status" id="status">Connecting to Yapin…</p>
+      <button id="retry" hidden>Try again</button>
+    </main>
+  </body>
+</html>

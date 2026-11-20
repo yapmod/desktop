@@ -1,0 +1,35 @@
+.yapmod-window-controls {
+  display: flex;
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  direction: ltr;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+.yapmod-window-controls > button {
+  all: unset;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 46px;
+  color: inherit;
+}
+.yapmod-window-controls > button:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+.yapmod-window-controls > button[data-command="close"]:hover { background: #c42b1c; color: white; }
+.yapmod-window-controls > button:focus-visible { outline: 2px solid currentColor; outline-offset: -3px; }
+.yapmod-window-controls i { display: block; position: relative; box-sizing: border-box; }
+.yapmod-window-controls [data-command="minimize"] i { width: 10px; height: 1px; background: currentColor; }
+.yapmod-window-controls [data-command="toggleMaximize"] i { width: 10px; height: 10px; border: 1px solid; }
+.yapmod-window-controls .restore i { width: 8px; height: 8px; translate: -1px 1px; }
+.yapmod-window-controls .restore i::after {
+  content: ""; position: absolute; left: 1px; top: -3px; width: 7px; height: 7px;
+  border-top: 1px solid; border-right: 1px solid;
+}
+.yapmod-window-controls [data-command="close"] i { width: 12px; height: 12px; }
+.yapmod-window-controls [data-command="close"] i::before,
+.yapmod-window-controls [data-command="close"] i::after {
+  content: ""; position: absolute; top: 5px; left: 0; width: 13px; height: 1px;
+  background: currentColor; transform: rotate(45deg);
+}
+.yapmod-window-controls [data-command="close"] i::after { transform: rotate(-45deg); }

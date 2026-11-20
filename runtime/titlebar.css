@@ -1,0 +1,17 @@
+.app > .topbar[data-yapmod-caption="macos"],
+.app > .topbar[data-yapmod-caption="windows"] {
+  display: flex;
+  position: relative;
+  box-sizing: border-box;
+  min-height: 26px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.app > .topbar[data-yapmod-caption="macos"] { padding-inline: 76px; }
+.app > .topbar[data-yapmod-caption="windows"] { padding-inline: 138px; }
+.topbar[data-yapmod-caption] .topbar-brand img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  opacity: 1;
+}

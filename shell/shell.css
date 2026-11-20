@@ -1,0 +1,44 @@
+:root {
+  color-scheme: dark;
+  font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background: #15161a;
+  color: #f1f1f4;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+#titlebar {
+  position: relative;
+  display: none;
+  align-items: stretch;
+  height: 32px;
+  background: #191a1e;
+  border-bottom: 1px solid #ffffff0c;
+  user-select: none;
+}
+[data-platform="macos"] #titlebar, [data-platform="windows"] #titlebar { display: flex; }
+.drag-area {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  padding-inline: 12px;
+  gap: 8px;
+  font-size: 12px;
+  color: #c9c9ce;
+}
+[data-platform="macos"] .drag-area { justify-content: center; font-size: 12px; font-weight: 550; }
+.window-icon { width: 16px; height: 16px; }
+main {
+  position: absolute; inset: 32px 0 0; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; padding: 24px; text-align: center;
+}
+.app-icon { width: 72px; height: 72px; }
+h1 { font-size: 22px; letter-spacing: -.04em; margin: 16px 0 5px; font-weight: 640; }
+p { margin: 0; color: #b8b8c2; line-height: 1.5; }
+#retry {
+  margin-top: 18px; padding: 8px 16px; border: 1px solid #ffffff24; border-radius: 7px;
+  color: #f1f1f4; background: #303137; font: inherit; cursor: pointer;
+}
+#retry:hover { background: #3d3e45; }
+button:focus-visible { outline: 2px solid #c9b5ff; outline-offset: -2px; }
+
+main[hidden] { display: none; }
