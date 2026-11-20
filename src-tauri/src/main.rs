@@ -15,6 +15,7 @@ fn main() {
     tauri::Builder::default()
         .invoke_system(include_str!("../webview/ipc.js"))
         .plugin(notifications::native_plugin())
+        .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(titlebar::TitlebarLayout::default())
