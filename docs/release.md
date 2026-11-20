@@ -69,7 +69,7 @@ If a job fails, fix the cause and rerun the affected jobs. Uploads can resume on
 
 ## Publishing the desktop plugin
 
-Merge the changes to `runtime/plugins/desktop.js` into the default branch, then select **Actions → Publish desktop plugin → Run workflow** on that branch. The job tests the JavaScript, copies the plugin to `desktop-plugins.js`, signs it, and verifies the signature. It uploads that file and `desktop-plugins.js.sig` to the `plugins-v1` GitHub prerelease. The release notes identify the source commit. The app version can stay the same.
+Merge changes to `plugin/src/` or `plugin/manifest.json` into the default branch, then select **Actions → Publish desktop plugin → Run workflow** on that branch. The job type-checks the plugin, runs the Yapmod builder and JavaScript tests, then signs and verifies `plugin/dist/desktop-plugins.js`. Cargo embeds the same registration artifact when building the desktop app. It uploads that file and `desktop-plugins.js.sig` to the `plugins-v1` GitHub prerelease. The release notes identify the source commit. The app version can stay the same.
 
 Each publication replaces both assets. GitHub must allow asset changes on this prerelease. If an upload is interrupted, rerun the workflow to restore a matching plugin and signature. Preserve the v1 plugin contract for installed apps. For an incompatible native API change, create a separate channel and ship an app version that supports it.
 

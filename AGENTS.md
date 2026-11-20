@@ -11,10 +11,11 @@ Yapmod Desktop opens `https://www.yapin.gg/?auth=in`. Yapin handles sign-in and 
 | `shell/` | Fallback title bar, shared caption controls, loading state, and connection recovery. Plain HTML, CSS, and JavaScript. |
 | `src-tauri/src/window.rs`, `navigation.rs` | Native window, WebView sizing, allowed origins, sign-in windows, and bundle injection on page load. |
 | `src-tauri/src/bundles.rs` | Release resolution, download size limits, integrity checks, and atomic writes to `bundles-v1/` in the app cache. |
-| `runtime/titlebar.js`, `runtime/titlebar.css`, `src-tauri/src/titlebar.rs` | Brand the existing Yapin header, attach window controls, and switch the WebView between the integrated and fallback layouts. |
-| `runtime/ipc.js` | Sends JSON commands through the WebView's native message channel. |
-| `runtime/bootstrap.js` | Starts the client and registers the plugin once per top-level document. |
-| `runtime/plugins/desktop.js` | Standalone JavaScript expression that receives the client and native bridge. The bundled plugin and signed plugin update share this source. |
+| `src-tauri/webview/titlebar.js`, `src-tauri/webview/titlebar.css`, `src-tauri/src/titlebar.rs` | Brand the existing Yapin header, attach window controls, and switch the WebView between the integrated and fallback layouts. |
+| `src-tauri/webview/ipc.js` | Sends JSON commands through the WebView's native message channel. |
+| `src-tauri/webview/bootstrap.js` | Starts the client and registers the plugin once per top-level document. |
+| `plugin/src/`, `plugin/manifest.json` | TypeScript and Solid JSX for the Desktop settings and native notifications. |
+| `scripts/build-plugin.mjs` | Builds the SDK expression and wraps it for the desktop v1 registration API. Cargo and the signed plugin workflow use the same build script. |
 | `src-tauri/src/notifications.rs`, `updates.rs` | System notifications, notification clicks, and application update checks and installation. |
 | `src-tauri/capabilities/`, `src-tauri/build.rs` | Per-WebView IPC permissions and declarations for the commands they cover. |
 | `.github/workflows/`, `scripts/release*` | Cross-platform builds, update signatures, manifests, and publishing. |
@@ -31,7 +32,7 @@ Yapin owns sign-in data. WebKit checks navigation for child frames as well as to
 
 Register the native notification backend without its global JavaScript polyfill. The client plugin installs the Web Notifications adapter on Yapin. Google sign-in windows and embedded authentication frames must retain their browser-provided APIs.
 
-The desktop plugin uses `registerClientPlugin`, `api.settings.registerSection`, the client's UI components, and its storage API. Keep the plugin ID `client:yapmod-desktop` stable to preserve preferences. Test cleanup by disabling and re-enabling the plugin. Compatible installations share the `plugins-v1` update channel. Create a new channel for incompatible changes to the native bridge.
+Author the desktop plugin in `plugin/src/index.tsx` using the lifecycle and shared imports from the official starter. Use `@yapmod/ui`, Solid JSX, and `yapmod.storage` for preferences. Run `pnpm typecheck` and `pnpm build:plugin` to validate the package. The registration wrapper supplies the client’s API to the compiled plugin. [Official starter](https://github.com/yapmod/plugin-starter) Keep the plugin ID `client:yapmod-desktop` stable to preserve preferences. Test cleanup by disabling and re-enabling the plugin. Compatible installations share the `plugins-v1` update channel. Create a new channel for incompatible changes to the native bridge.
 
 The editable icon is `shell/yapmod.svg`. The shell and signed-in header use it directly. After editing it, run `pnpm tauri icon shell/yapmod.svg --output <temporary-directory>` and copy the matching desktop PNG, ICO, and ICNS files into `src-tauri/icons/`.
 

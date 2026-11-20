@@ -38,6 +38,7 @@ pnpm dev
 
 | Command | Result |
 | --- | --- |
+| `pnpm build:plugin` | Compiles the TypeScript and Solid JSX desktop plugin with the Yapmod builder. |
 | `pnpm test` | Runs the JavaScript and Rust tests for client startup, IPC, and desktop integration. |
 | `pnpm build` | Builds the application and installers for the current platform. |
 | `pnpm tauri build --bundles app` | Builds the macOS app bundle without creating a disk image. |

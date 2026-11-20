@@ -3,7 +3,7 @@
   "productName": "Yapmod Desktop",
   "version": "../package.json",
   "identifier": "gg.yapmod.desktop",
-  "build": { "frontendDist": "../shell" },
+  "build": { "frontendDist": "../shell", "additionalWatchFolders": ["../plugin/src", "../plugin/manifest.json", "../scripts/build-plugin.mjs"] },
   "app": {
     "windows": [],
     "security": {

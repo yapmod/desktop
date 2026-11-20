@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import { runInNewContext } from "node:vm";
 
-const source = await readFile(new URL("desktop.js", import.meta.url), "utf8");
+const source = await readFile(new URL("../dist/desktop-plugins.js", import.meta.url), "utf8");
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 
 function fixture(invoke, storage = {}) {
@@ -13,6 +13,7 @@ function fixture(invoke, storage = {}) {
   const disposers = [];
   const api = {
     solid: { createSignal: (initial) => [() => initial, (next) => { initial = next; }] },
+    ui: {}, solidWeb: {}, settings: { registerSection() {} },
     storage,
     log() {},
     onDispose(disposer) { disposers.push(disposer); },
@@ -89,4 +90,30 @@ test("an opted-out user gets no native permission prompt or system alert", async
   window.Notification = replacement;
   dispose();
   assert.equal(window.Notification, replacement);
+});
+
+test("the SDK output runs through Yapmod's plugin lifecycle with the shared native bridge", async () => {
+  const expression = await readFile(new URL("../dist/plugin.js", import.meta.url), "utf8");
+  const window = new EventTarget();
+  const calls = [];
+  window.__TAURI_INTERNALS__ = {
+    async invoke(command) { calls.push(command); return "granted"; },
+  };
+  const disposers = [];
+  const sections = [];
+  const yapmod = {
+    storage: {}, ui: {}, solid: {}, solidWeb: {},
+    settings: { registerSection(section) { sections.push(section); } },
+    onDispose(disposer) { disposers.push(disposer); },
+  };
+  const factory = runInNewContext(expression, { window, yapmod, EventTarget, Event });
+  for (let activation = 0; activation < 2; activation++) {
+    factory(yapmod).onLoad();
+    await settle();
+    assert.equal(window.Notification.permission, "granted");
+    assert.equal(sections[activation].id, "desktop");
+    disposers.splice(0).forEach(dispose => dispose());
+    assert.equal(window.Notification, undefined);
+  }
+  assert.deepEqual(calls, ["notification_permission", "notification_permission"]);
 });

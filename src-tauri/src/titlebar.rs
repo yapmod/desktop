@@ -41,10 +41,10 @@ pub fn initialization_script() -> String {
     let styles = concat!(
         include_str!("../../shell/caption.css"),
         "\n",
-        include_str!("../../runtime/titlebar.css")
+        include_str!("../webview/titlebar.css")
     );
     let css = serde_json::to_string(styles).expect("CSS is valid text");
-    let integrate = include_str!("../../runtime/titlebar.js");
+    let integrate = include_str!("../webview/titlebar.js");
     let controls = include_str!("../../shell/caption.js");
     format!("{integrate}('{platform}', 'data:image/svg+xml;base64,{logo}', {css}, {controls});")
 }
