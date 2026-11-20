@@ -2,6 +2,7 @@ export interface DesktopInfo {
   version: string;
   platform: string;
   updaterAvailable: boolean;
+  autostartAvailable?: boolean;
 }
 
 export interface NativeBridge {
