@@ -15,9 +15,9 @@ On Windows, the NSIS installer ships without an Authenticode signature. SmartScr
 Generate the updater key pair on your computer. Choose a password when prompted and save it in your password manager. Back up the private key before releasing the app. Installed copies trust the corresponding public key.
 
 ```sh
-npm ci
+pnpm install --frozen-lockfile
 mkdir -p ~/.tauri
-npm run tauri -- signer generate -w ~/.tauri/yapmod-desktop.key
+pnpm tauri signer generate -w ~/.tauri/yapmod-desktop.key
 ```
 
 Set these repository-level Actions values using GitHub CLI. The first two commands read the key files directly. Enter the same password at the hidden prompt for the third command.
@@ -44,13 +44,13 @@ The first release uses the tag `v1.0.0`, and its notes are already in the change
 ```sh
 python3 scripts/release.py prepare 1.0.1
 git diff
-git add CHANGELOG.md package.json package-lock.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+git add CHANGELOG.md package.json src-tauri/Cargo.toml src-tauri/Cargo.lock
 git commit -m "chore(release): v1.0.1"
 git tag v1.0.1
 git push --atomic origin HEAD refs/tags/v1.0.1
 ```
 
-The script updates the npm and Cargo versions and their lockfiles, then moves the unreleased notes under the new version. Tauri reads its version from `package.json`.
+The script updates the app version in `package.json`, `Cargo.toml`, and `Cargo.lock`, then moves the unreleased notes under the new version. Tauri reads its version from `package.json`.
 
 The **Desktop** workflow runs the tests and builds packages on each OS. Pull requests and pushes to `main` produce downloadable Actions artifacts. A `vX.Y.Z` tag also signs the updates. The publish job verifies each signature with the configured public key and assembles a single `latest.json` manifest. The GitHub Release becomes public once all files have been uploaded.
 
@@ -76,7 +76,7 @@ Each publication replaces both assets. GitHub must allow asset changes on this p
 CI uses `dmgbuild` to write the Finder layout directly into the disk image. It reads the dimensions, background, and icon positions from `bundle.macOS.dmg` in the Tauri configuration. To reproduce the build locally, run these commands from the project root with uv installed. [uv documentation](https://docs.astral.sh/uv/)
 
 ```sh
-npm run tauri -- build --bundles app
+pnpm tauri build --bundles app
 uv run --script scripts/release-dmg.py \
   "src-tauri/target/release/bundle/macos/Yapmod Desktop.app" \
   "src-tauri/target/release/bundle/dmg/Yapmod-Desktop.dmg"
