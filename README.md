@@ -16,7 +16,7 @@ Yapin provides the sign-in form and available sign-in methods. Google sign-in de
 
 ## Settings and updates
 
-Open **Settings → Yapmod → Desktop** to toggle system notifications, see the installed versions, or check for an app update. Yapin controls which messages trigger alerts. Clicking a notification takes you back to the conversation when the OS delivers the click and the originating page is still open.
+Open **Settings → Yapmod → Desktop** to manage notifications, see the installed versions, or check for an app update. Enable **Launch at login** to open Yapmod Desktop automatically when you sign in to this computer. The setting is off on a fresh installation. Yapin controls which messages trigger alerts. Clicking a notification takes you back to the conversation when the OS delivers the click and the originating page is still open.
 
 | Component | How it updates |
 | --- | --- |

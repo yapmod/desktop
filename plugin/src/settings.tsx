@@ -1,5 +1,6 @@
 import { Button, Section, SettingRow, SettingsPage, SettingText, Switch } from '@yapmod/ui';
 import { createSignal, onCleanup } from 'solid-js';
+import { AutostartSetting } from './AutostartSetting';
 import { invoke, type DesktopInfo } from './native';
 
 export function DesktopSettings(props: { requestPermission(): Promise<NotificationPermission> }) {
@@ -49,6 +50,7 @@ export function DesktopSettings(props: { requestPermission(): Promise<Notificati
           <Switch aria-label="Desktop notifications" checked={yapmod.storage.notifications !== false} onChange={changeNotifications} />
         </SettingRow>
       </Section>
+      {info()?.autostartAvailable && <AutostartSetting />}
       <Section label="Software">
         <SettingText label="Desktop version" value={info()?.version ?? '—'} />
         <SettingText label="Client version" value={window.YapmodClient?.version ?? '—'} />
