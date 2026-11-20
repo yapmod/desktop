@@ -2,26 +2,22 @@
 
 ## Unreleased
 
-### Added
-
-- Add a Launch at login switch in Desktop settings (#1).
-
-### Changed
-
-- Run tests on pull requests and main, and build installers on release tags.
-- Use Ubuntu's public archive for Linux CI packaging dependencies.
-- Use pnpm for local development, CI, and release tooling (#2).
-- Build desktop settings and notifications as a TypeScript and Solid JSX Yapmod plugin (#4).
-
-### Fixed
-
-- Keep the main window and sign-in popups usable at small sizes and fit them to compact displays (#3).
-
 ## v1.0.0
 
-- Open Yapin in a persistent desktop window with Google sign-in and independently updated Yapmod client releases.
-- Use Yapin’s existing signed-in header for the rounded Yapmod icon and title. Integrate native macOS traffic lights and Windows caption buttons. Keep the system window frame on Linux.
-- Add desktop settings and native notifications through the Yapmod plugin API.
-- Use the WebView’s native message channel for desktop commands and keep sign-in frames isolated from desktop permissions.
-- Build a universal macOS disk image, a Windows x64 installer, and Linux x64 AppImage and Debian packages.
-- Verify signatures for desktop app and plugin updates with a project-owned Tauri key.
+### Desktop
+
+- Sign in to Yapin, including with Google, and keep your session between launches. The app loads the latest stable Yapmod client and can reuse a verified cached copy.
+- Use Yapin’s existing header with the rounded Yapmod icon, native macOS traffic lights, and Windows caption buttons. Linux uses its system window frame.
+- Open **Settings → Yapmod → Desktop** to manage native notifications, enable **Launch at login**, or check for app updates. Launch at login is off by default (#1).
+- Resize the main window and sign-in popups on compact displays while keeping their controls accessible (#3).
+
+### Installation and updates
+
+- Download a universal macOS disk image, a Windows x64 installer, or a Linux x64 AppImage or Debian package.
+- The app verifies signed desktop updates and can receive independent signed updates to its bundled TypeScript and Solid JSX plugin (#4).
+- The desktop bridge uses native WebView messaging. Google sign-in windows and embedded authentication frames retain their own browser APIs.
+
+### Development
+
+- Use pnpm for development, testing, and releases (#2).
+- Pull requests and pushes to main run formatting and tests. Release tags build the installers, with Linux packaging dependencies downloaded from Ubuntu’s public archive.
