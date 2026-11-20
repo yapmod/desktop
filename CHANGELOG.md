@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
 - Use Ubuntu's public archive for Linux CI packaging dependencies.
+- Use pnpm for local development, CI, and release tooling (#2).
 
 ## v1.0.0
 
