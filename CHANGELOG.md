@@ -6,6 +6,7 @@
 
 - Use Ubuntu's public archive for Linux CI packaging dependencies.
 - Use pnpm for local development, CI, and release tooling (#2).
+- Build desktop settings and notifications as a TypeScript and Solid JSX Yapmod plugin (#4).
 
 ## v1.0.0
 
