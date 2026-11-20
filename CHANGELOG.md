@@ -13,6 +13,10 @@
 - Use pnpm for local development, CI, and release tooling (#2).
 - Build desktop settings and notifications as a TypeScript and Solid JSX Yapmod plugin (#4).
 
+### Fixed
+
+- Keep the main window and sign-in popups usable at small sizes and fit them to compact displays (#3).
+
 ## v1.0.0
 
 - Open Yapin in a persistent desktop window with Google sign-in and independently updated Yapmod client releases.
