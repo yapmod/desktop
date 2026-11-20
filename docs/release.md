@@ -2,6 +2,8 @@
 
 Host releases in a public GitHub repository so installed apps can download updates without an access token. The workflow reads the repository name from `GITHUB_REPOSITORY`. The Yapmod client follows stable releases of `yapmod/client` on its own schedule.
 
+Pull requests and pushes to `main` run formatting and tests on Linux. A version tag triggers the macOS, Windows, and Linux installer builds.
+
 ## Direct distribution
 
 Releases use GitHub, Tauri's free signing tools, and a project-owned minisign key pair. This setup requires no paid Apple or Microsoft developer account.
@@ -30,7 +32,7 @@ gh secret set TAURI_SIGNING_PRIVATE_KEY_PASSWORD --repo yapmod/desktop
 
 You can also enter the values under **Settings → Secrets and variables → Actions**. Put the public key under **Variables**, and the private key and password under **Secrets**. The workflows use the repository's automatic GitHub token to publish releases. [Repository Actions settings](https://github.com/yapmod/desktop/settings/secrets/actions)
 
-Once the **Desktop** workflow passes on `main` and the signing values are in place, publish the prepared first version by tagging the initial release commit.
+Once **Checks** passes on `main` and the signing values are in place, tag the commit you intend to ship.
 
 ```sh
 git tag v1.0.0
@@ -52,7 +54,7 @@ git push --atomic origin HEAD refs/tags/v1.0.1
 
 The script updates the app version in `package.json`, `Cargo.toml`, and `Cargo.lock`, then moves the unreleased notes under the new version. Tauri reads its version from `package.json`.
 
-The **Desktop** workflow runs the tests and builds packages on each OS. Pull requests and pushes to `main` produce downloadable Actions artifacts. A `vX.Y.Z` tag also signs the updates. The publish job verifies each signature with the configured public key and assembles a single `latest.json` manifest. The GitHub Release becomes public once all files have been uploaded.
+On a `vX.Y.Z` tag, **Release desktop** runs the tests, builds the packages on each OS, and signs the updates. The publish job verifies each signature with the configured public key and assembles a single `latest.json` manifest. The GitHub Release becomes public once all files have been uploaded.
 
 | Platform | First installation | Subsequent updates |
 | --- | --- | --- |
