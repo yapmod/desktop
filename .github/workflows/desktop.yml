@@ -58,6 +58,8 @@ jobs:
       - name: Install Linux packaging libraries
         if: runner.os == 'Linux'
         run: |
+          # Keep the runner's Ubuntu archive and security mirrors when Azure downloads stall.
+          sudo sed -i '/azure\.archive\.ubuntu\.com/d' /etc/apt/apt-mirrors.txt
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev libxdo-dev libfuse2 patchelf xdg-utils \

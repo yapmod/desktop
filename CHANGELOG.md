@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Use Ubuntu's public archive for Linux CI packaging dependencies.
+
 ## v1.0.0
 
 - Open Yapin in a persistent desktop window with Google sign-in and independently updated Yapmod client releases.
