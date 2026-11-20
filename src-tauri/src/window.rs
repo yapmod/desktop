@@ -11,16 +11,26 @@ use tauri::{
 };
 
 static POPUP_ID: AtomicU64 = AtomicU64::new(0);
+const SIGN_IN_MINIMUM: LogicalSize<f64> = LogicalSize::new(360., 400.);
 
 fn viewport(window: &Window) -> tauri::Result<LogicalSize<f64>> {
     Ok(window.inner_size()?.to_logical(window.scale_factor()?))
+}
+
+fn set_minimum(window: &Window, minimum: LogicalSize<f64>) -> tauri::Result<()> {
+    // prevent_overflow may have fitted the opening size to a smaller work area.
+    let fitted = viewport(window)?;
+    window.set_min_size(Some(LogicalSize::new(
+        minimum.width.min(fitted.width),
+        minimum.height.min(fitted.height),
+    )))
 }
 
 pub fn create(app: &AppHandle) -> tauri::Result<()> {
     let builder = WindowBuilder::new(app, "main")
         .title("Yapmod Desktop")
         .inner_size(1150., 760.)
-        .min_inner_size(560., 380.)
+        .prevent_overflow()
         .center();
     #[cfg(target_os = "macos")]
     let builder = builder
@@ -29,6 +39,7 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
     #[cfg(target_os = "windows")]
     let builder = builder.decorations(false).shadow(true);
     let window = builder.build()?;
+    set_minimum(&window, LogicalSize::new(560., 420.))?;
     let init = format!("window.yapmodPlatform = '{}';", std::env::consts::OS);
     let shell = WebviewBuilder::new("shell", WebviewUrl::App("index.html".into()))
         .initialization_script(init)
@@ -61,18 +72,26 @@ fn popup(app: &AppHandle, url: Url, features: NewWindowFeatures) -> NewWindowRes
     // OAuth needs its opener and the same cookie store to deliver the result.
     if navigation::is_auth(&url) || navigation::is_yapin(&url) || url.as_str() == "about:blank" {
         let label = format!("signin-{}", POPUP_ID.fetch_add(1, Ordering::Relaxed));
+        let requested = features.size().unwrap_or(LogicalSize::new(540., 680.));
         let window = WebviewWindowBuilder::new(
             app,
             label,
             WebviewUrl::External("about:blank".parse().unwrap()),
         )
         .title("Yapin")
-        .inner_size(540., 680.)
         .window_features(features)
+        .inner_size(
+            requested.width.max(SIGN_IN_MINIMUM.width),
+            requested.height.max(SIGN_IN_MINIMUM.height),
+        )
+        .prevent_overflow()
         .on_navigation(navigation::embedded)
         .on_new_window(|_, _| NewWindowResponse::Deny)
         .build();
         if let Ok(window) = window {
+            if let Err(error) = set_minimum(&window.as_ref().window(), SIGN_IN_MINIMUM) {
+                eprintln!("Could not set the sign-in window minimum size: {error}");
+            }
             #[cfg(target_os = "macos")]
             if let Err(error) = crate::popup_macos::install(&window) {
                 eprintln!("Could not install the sign-in window close handler: {error}");
