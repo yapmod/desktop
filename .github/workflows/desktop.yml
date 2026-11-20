@@ -1,9 +1,7 @@
-name: Desktop
+name: Release desktop
 
 on:
-  pull_request:
   push:
-    branches: [main]
     tags: ['v*']
 
 permissions:
@@ -11,7 +9,7 @@ permissions:
 
 concurrency:
   group: desktop-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 
 defaults:
   run:
@@ -72,21 +70,15 @@ jobs:
       - run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
       - name: Build packages
         env:
-          YAPMOD_RELEASE_REPO: ${{ github.ref_type == 'tag' && github.repository || '' }}
-          YAPMOD_UPDATER_PUBLIC_KEY: ${{ github.ref_type == 'tag' && vars.TAURI_UPDATER_PUBLIC_KEY || '' }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ github.ref_type == 'tag' && secrets.TAURI_SIGNING_PRIVATE_KEY || '' }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ github.ref_type == 'tag' && secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '' }}
+          YAPMOD_RELEASE_REPO: ${{ github.repository }}
+          YAPMOD_UPDATER_PUBLIC_KEY: ${{ vars.TAURI_UPDATER_PUBLIC_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           APPIMAGE_EXTRACT_AND_RUN: 1
         run: |
-          flags=()
-          if [[ "$GITHUB_REF_TYPE" == tag ]]; then
-            : "${TAURI_SIGNING_PRIVATE_KEY:?Configure the signing key in GitHub Actions secrets}"
-            python scripts/release.py config "$GITHUB_REF_NAME" ci-updater.json
-            flags+=(--config ci-updater.json)
-          else
-            unset YAPMOD_RELEASE_REPO YAPMOD_UPDATER_PUBLIC_KEY TAURI_SIGNING_PRIVATE_KEY TAURI_SIGNING_PRIVATE_KEY_PASSWORD
-          fi
-          pnpm tauri build --ci --target "$TARGET" --bundles "$BUNDLES" "${flags[@]}" -- --locked
+          : "${TAURI_SIGNING_PRIVATE_KEY:?Configure the signing key in GitHub Actions secrets}"
+          python scripts/release.py config "$GITHUB_REF_NAME" ci-updater.json
+          pnpm tauri build --ci --target "$TARGET" --bundles "$BUNDLES" --config ci-updater.json -- --locked
       - name: Create the styled disk image
         if: runner.os == 'macOS'
         run: |

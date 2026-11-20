@@ -2,6 +2,8 @@
 
 Host releases in a public GitHub repository so installed apps can download updates without an access token. The workflow reads the repository name from `GITHUB_REPOSITORY`. The Yapmod client follows stable releases of `yapmod/client` on its own schedule.
 
+Pull requests and pushes to `main` run formatting and tests on Linux. A version tag triggers the macOS, Windows, and Linux installer builds.
+
 ## Direct distribution
 
 Releases use GitHub, Tauri's free signing tools, and a project-owned minisign key pair. This setup requires no paid Apple or Microsoft developer account.
