@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Ask for microphone and camera access through the browser permission flow on macOS and Windows. Block new media requests from the local shell, sign-in windows, and pages outside Yapin. Linux calling support remains unavailable.
+
 ## v1.0.0
 
 ### Desktop

@@ -3,6 +3,7 @@
 mod bundles;
 mod navigation;
 mod notifications;
+mod permissions;
 #[cfg(target_os = "macos")]
 mod popup_macos;
 mod titlebar;
@@ -13,6 +14,7 @@ use tauri::Manager;
 
 fn main() {
     tauri::Builder::default()
+        .on_permission_request(permissions::request)
         .invoke_system(include_str!("../webview/ipc.js"))
         .plugin(notifications::native_plugin())
         .plugin(tauri_plugin_autostart::Builder::new().build())
