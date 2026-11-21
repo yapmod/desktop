@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Enable file downloads from Yapin and show a native Save dialog to choose the filename and destination.
+
 ## v1.1.0
 
 ### Desktop
