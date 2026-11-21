@@ -1,5 +1,6 @@
 import { installNotifications } from './notifications';
 import { connect, type NativeBridge } from './native';
+import { installYaplay } from './yaplay';
 import { DesktopSettings } from './settings';
 
 export default function desktopPlugin(_api: typeof yapmod, bridge: NativeBridge | undefined = window.__TAURI_INTERNALS__) {
@@ -8,11 +9,12 @@ export default function desktopPlugin(_api: typeof yapmod, bridge: NativeBridge 
       if (!bridge) return;
       connect(bridge);
       const notifications = installNotifications();
+      const YaplaySettings = installYaplay(bridge);
       yapmod.settings.registerSection({
         id: 'desktop',
         label: 'Desktop',
         icon: 'settings',
-        render: () => <DesktopSettings requestPermission={() => notifications.requestPermission()} />,
+        render: () => <DesktopSettings yaplay={YaplaySettings} requestPermission={() => notifications.requestPermission()} />,
       });
     },
   };

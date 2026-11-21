@@ -1,0 +1,54 @@
+{
+  "outgoing": [
+    {
+      "type": "hello",
+      "version": 1,
+      "controls": true
+    },
+    {
+      "type": "voice_state",
+      "in_call": true,
+      "members": [
+        {
+          "id": "self",
+          "name": "You",
+          "avatar_url": "https://example.com/avatar.png",
+          "color": [
+            10,
+            20,
+            30
+          ],
+          "speaking": true,
+          "muted": false,
+          "is_self": true
+        }
+      ]
+    },
+    {
+      "type": "mic_state",
+      "muted": false
+    },
+    {
+      "type": "deafen_state",
+      "deafened": false
+    },
+    {
+      "type": "notification",
+      "title": "Hi",
+      "body": "Body"
+    }
+  ],
+  "controls": [
+    {
+      "type": "set_mute",
+      "muted": true
+    },
+    {
+      "type": "set_deafen",
+      "deafened": true
+    },
+    {
+      "type": "leave_call"
+    }
+  ]
+}

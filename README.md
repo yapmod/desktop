@@ -66,3 +66,17 @@ Public releases use a public GitHub repository and a free Tauri signing key pair
 Yapmod Desktop is licensed under GPL-3.0. The rounded app icon uses the official Yapmod SVG mark. Its pink background follows the original icon artwork. The banner and disk image background come from revision `b90b674` of the original project. [License](LICENSE) · [SVG mark](https://github.com/yapmod/client/blob/a8b2b0c8c183f7ae26033934119b77f72624f2e9/apps/docs/public/logo.svg) · [Banner](https://github.com/ilyeshdz/yapmod/blob/b90b6740334ef35fefee44c9da0c518c4f575535/images/banner.png) · [Icons](https://github.com/ilyeshdz/yapmod/tree/b90b6740334ef35fefee44c9da0c518c4f575535/src-tauri/icons) · [Disk image background](https://github.com/ilyeshdz/yapmod/blob/b90b6740334ef35fefee44c9da0c518c4f575535/src-tauri/dmgly/assets/dmg-background.png)
 
 <p align="center">Yapmod Desktop is an independent Yapin community project.</p>
+
+## Yaplay overlay
+
+Open **Settings → Yapmod → Desktop → Yaplay** and turn on **Connect to Yaplay**. Start [Yaplay](https://github.com/ilyeshdz/yaplay) with its overlay enabled. Both apps use port **8080** by default; enter Yaplay’s port in Desktop settings if you changed it.
+
+The built-in integration forwards your current call roster, display names, speaking activity, mute/deafen state, and notifications created by the desktop notification adapter. The Rust host owns the local WebSocket connection. With a control-capable Yaplay build, its buttons can mute, deafen, or leave your current Yapin call. Older Yaplay versions still display state. Turning off the integration clears the overlay roster and disconnects.
+
+See [the integration notes](docs/yaplay.md) for the protocol, validation, and current testing limitations.
+
+## Local client development
+
+`pnpm dev` first builds the sibling `../client` checkout, then launches the desktop with that local client bundle and the locally compiled desktop integration. Install the client checkout’s dependencies first with `pnpm install --frozen-lockfile`. Set `YAPMOD_CLIENT_DIR` to use a different checkout. Run `pnpm dev` again after editing client source to rebuild it; this command does not start a client watcher.
+
+The bundle override is limited to debug builds. Development sessions use the bundled desktop integration rather than downloaded plugin updates; release builds retain the verified release/cache flow.

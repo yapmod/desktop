@@ -7,7 +7,7 @@
   "type": "module",
   "packageManager": "pnpm@12.10.1",
   "scripts": {
-    "dev": "tauri dev",
+    "dev": "node scripts/dev.mjs",
     "build": "tauri build",
     "tauri": "tauri",
     "test": "pnpm test:js && cargo test --locked --manifest-path src-tauri/Cargo.toml",

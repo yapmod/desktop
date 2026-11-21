@@ -66,6 +66,14 @@ impl BundleStore {
     }
 
     pub async fn resolve(&self) -> Result<BundleSet, String> {
+        #[cfg(debug_assertions)]
+        if let Some(path) = std::env::var_os("YAPMOD_DEV_CLIENT_BUNDLE") {
+            eprintln!(
+                "[yapmod-desktop] Using local client: {}",
+                Path::new(&path).display()
+            );
+            return local_dev_bundle(Path::new(&path));
+        }
         let mut current = self.current.lock().await;
         if let Some((checked, set)) = current.as_ref()
             && checked.elapsed() < RECHECK
@@ -90,6 +98,21 @@ impl BundleStore {
         *current = Some((Instant::now(), set.clone()));
         Ok(set)
     }
+}
+
+// Development uses the local client and the plugin compiled by Cargo together.
+// Release builds never consult this override or skip signed bundle verification.
+#[cfg(debug_assertions)]
+fn local_dev_bundle(path: &Path) -> Result<BundleSet, String> {
+    let source = fs::read_to_string(path)
+        .map_err(|error| format!("Could not read local client {}: {error}", path.display()))?;
+    if source.trim().is_empty() || source.len() > CLIENT_LIMIT {
+        return Err("The local client bundle is empty or exceeds the size limit".into());
+    }
+    Ok(BundleSet {
+        client: source.into(),
+        updated_plugin: None,
+    })
 }
 
 #[derive(Serialize, Deserialize)]
@@ -347,6 +370,22 @@ mod tests {
         );
         assert!(asset_url("untrusted.invalid/../elsewhere", "tag", BUNDLE_ASSET).is_err());
         assert!(asset_url("yapmod/client", "..", BUNDLE_ASSET).is_err());
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    fn local_development_bundle_is_fresh_and_has_no_plugin_update() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("yapmod-client.js");
+        assert!(local_dev_bundle(&path).is_err());
+        fs::write(&path, "local client v1").unwrap();
+        let first = local_dev_bundle(&path).unwrap();
+        assert_eq!(&*first.client, "local client v1");
+        assert!(first.updated_plugin.is_none());
+        fs::write(&path, "local client v2").unwrap();
+        assert_eq!(&*local_dev_bundle(&path).unwrap().client, "local client v2");
+        fs::write(&path, " ").unwrap();
+        assert!(local_dev_bundle(&path).is_err());
     }
 
     #[tokio::test]

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Build and load the local Yapmod client before starting `pnpm dev`.
+
+- Support Yaplay 1.2 profile pictures, including server avatars, and discard delayed overlay controls after switching calls.
+
+- Add an optional Yaplay integration in Desktop settings for live call rosters, speaking indicators, notifications, and overlay mute, deafen, and leave-call controls. The native bridge connects to Yaplay on localhost and reconnects automatically.
+
 - Ask for microphone and camera access through the browser permission flow on macOS and Windows. Block new media requests from the local shell, sign-in windows, and pages outside Yapin. Linux calling support remains unavailable.
 - Keep Yapmod Desktop running in the system tray when closing its window. Use the tray menu to reopen the app or quit; notification clicks and the macOS Dock also restore the window.
 

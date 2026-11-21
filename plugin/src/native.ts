@@ -3,6 +3,7 @@ export interface DesktopInfo {
   platform: string;
   updaterAvailable: boolean;
   autostartAvailable?: boolean;
+  yaplayAvailable?: boolean;
 }
 
 export interface NativeBridge {

@@ -53,6 +53,7 @@ export function installNotifications() {
       for (const type of ['show', 'close', 'click', 'error'] as const) {
         this.addEventListener(type, (event) => this[`on${type}`]?.(event));
       }
+      window.dispatchEvent(new CustomEvent('yapmod:desktop-notification', { detail: { title: this.title, body: this.body } }));
       if (DesktopNotification.permission !== 'granted') return;
 
       const random = new Uint32Array(1);

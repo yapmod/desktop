@@ -13,6 +13,9 @@
   ],
   "permissions": [
     "allow-desktop-info",
+    "allow-yaplay-start",
+    "allow-yaplay-exchange",
+    "allow-yaplay-stop",
     "allow-desktop-update",
     "autostart:allow-is-enabled",
     "autostart:allow-enable",
