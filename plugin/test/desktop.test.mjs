@@ -25,7 +25,7 @@ function fixture(invoke, storage = {}) {
       plugin.setup(api).onLoad();
       return true;
     },
-  }, { invoke });
+  }, { invoke: (command, args) => command === "desktop_info" ? Promise.resolve({}) : invoke(command, args) });
   return { window, previous, dispose() { disposers.forEach((dispose) => dispose()); } };
 }
 
@@ -115,5 +115,5 @@ test("the SDK output runs through Yapmod's plugin lifecycle with the shared nati
     disposers.splice(0).forEach(dispose => dispose());
     assert.equal(window.Notification, undefined);
   }
-  assert.deepEqual(calls, ["notification_permission", "notification_permission"]);
+  assert.deepEqual(calls, ["notification_permission", "desktop_info", "notification_permission", "desktop_info"]);
 });

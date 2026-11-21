@@ -16,6 +16,7 @@ pub struct DesktopInfo {
     updater_available: bool,
     autostart_available: bool,
     yaplay_available: bool,
+    tray_available: bool,
 }
 
 fn is_configured(app: &AppHandle) -> bool {
@@ -42,6 +43,7 @@ pub fn desktop_info(app: AppHandle) -> DesktopInfo {
         updater_available: is_configured(&app),
         autostart_available: true,
         yaplay_available: true,
+        tray_available: app.tray_by_id(crate::tray::ID).is_some(),
     }
 }
 

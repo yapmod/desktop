@@ -13,6 +13,9 @@
   ],
   "permissions": [
     "allow-desktop-info",
+    "allow-tray-start",
+    "allow-tray-exchange",
+    "allow-tray-stop",
     "allow-desktop-set-badge",
     "allow-yaplay-start",
     "allow-yaplay-exchange",

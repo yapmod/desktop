@@ -172,6 +172,7 @@ fn attach_yapin(window: &Window) -> tauri::Result<()> {
     .on_new_window(move |url, features| popup(&popup_app, url, features))
     .on_page_load(|page, load| {
         if load.event() == PageLoadEvent::Started {
+            crate::tray::reset(page.app_handle());
             if let Err(error) = crate::badge::apply(page.app_handle(), None) {
                 eprintln!("Could not clear the app badge: {error}");
             }

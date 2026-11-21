@@ -112,6 +112,9 @@ pub async fn desktop_notify(
     {
         return Err("Notifications are disabled".into());
     }
+    if crate::tray::notifications_snoozed(&app) {
+        return Ok(());
+    }
     app.state::<NotificationBudget>().admit()?;
     // Freedesktop notification bodies may be interpreted as markup.
     #[cfg(target_os = "linux")]

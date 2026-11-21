@@ -1,3 +1,4 @@
+import { installTray } from './tray';
 import { installNotifications } from './notifications';
 import { connect, type NativeBridge } from './native';
 import { installYaplay } from './yaplay';
@@ -10,6 +11,7 @@ export default function desktopPlugin(_api: typeof yapmod, bridge: NativeBridge 
       connect(bridge);
       const notifications = installNotifications();
       const YaplaySettings = installYaplay(bridge);
+      installTray(bridge);
       yapmod.settings.registerSection({
         id: 'desktop',
         label: 'Desktop',

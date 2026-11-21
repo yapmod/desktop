@@ -4,6 +4,7 @@ export interface DesktopInfo {
   updaterAvailable: boolean;
   autostartAvailable?: boolean;
   yaplayAvailable?: boolean;
+  trayAvailable?: boolean;
 }
 
 export interface NativeBridge {

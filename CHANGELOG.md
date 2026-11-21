@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Expand the system tray with live call and microphone status, mute/deafen controls, and a one-hour desktop notification snooze. Call controls work independently of Yaplay.
 - Restore Yapin unread-count badges on the macOS Dock, supported Linux launchers, and Windows taskbar. Counts clear when read or navigating away and are capped at 99.
 
 - Enable file downloads from Yapin and show a native Save dialog to choose the filename and destination.
