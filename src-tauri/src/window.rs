@@ -161,6 +161,11 @@ fn attach_yapin(window: &Window) -> tauri::Result<()> {
         "yapin",
         WebviewUrl::External("about:blank".parse().unwrap()),
     )
+    .initialization_script(format!(
+        "({})({:?})",
+        include_str!("../webview/badge.js"),
+        std::env::consts::OS
+    ))
     .disable_drag_drop_handler()
     .on_download(download)
     .on_navigation(navigation::embedded)
@@ -168,6 +173,9 @@ fn attach_yapin(window: &Window) -> tauri::Result<()> {
     .on_page_load(|page, load| {
         if load.event() == PageLoadEvent::Started {
             crate::tray::reset(page.app_handle());
+            if let Err(error) = crate::badge::apply(page.app_handle(), None) {
+                eprintln!("Could not clear the app badge: {error}");
+            }
             let _ = page.state::<TitlebarLayout>().set(&page, false);
             return;
         }

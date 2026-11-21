@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod badge;
 mod bundles;
 mod navigation;
 mod notifications;
@@ -30,6 +31,7 @@ fn main() {
             tray::tray_start,
             tray::tray_exchange,
             tray::tray_stop,
+            badge::desktop_set_badge,
             yaplay::yaplay_start,
             yaplay::yaplay_exchange,
             yaplay::yaplay_stop,
