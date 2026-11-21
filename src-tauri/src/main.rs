@@ -7,6 +7,7 @@ mod permissions;
 #[cfg(target_os = "macos")]
 mod popup_macos;
 mod titlebar;
+mod tray;
 mod updates;
 mod window;
 
@@ -36,8 +37,17 @@ fn main() {
             app.manage(bundles::BundleStore::new(app.path().app_cache_dir()?));
             notifications::install(app.handle())?;
             window::create(app.handle())?;
+            if let Err(error) = tray::install(app.handle()) {
+                eprintln!("Could not create the system tray: {error}");
+            }
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("could not start Yapmod Desktop");
+        .build(tauri::generate_context!())
+        .expect("could not start Yapmod Desktop")
+        .run(|_app, _event| {
+            #[cfg(target_os = "macos")]
+            if matches!(_event, tauri::RunEvent::Reopen { .. }) {
+                window::show(_app);
+            }
+        });
 }

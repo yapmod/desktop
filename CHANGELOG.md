@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Ask for microphone and camera access through the browser permission flow on macOS and Windows. Block new media requests from the local shell, sign-in windows, and pages outside Yapin. Linux calling support remains unavailable.
+- Keep Yapmod Desktop running in the system tray when closing its window. Use the tray menu to reopen the app or quit; notification clicks and the macOS Dock also restore the window.
 
 ## v1.0.0
 

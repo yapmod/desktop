@@ -26,6 +26,8 @@ This permission handling does not establish full voice/video call compatibility.
 
 ## Settings and updates
 
+Closing the main window keeps Yapmod Desktop running in the system tray so it can receive notifications. Use the tray menu to **Open Yapmod Desktop** or **Quit Yapmod Desktop**. On Windows, clicking the tray icon also opens the window; on macOS, the Dock icon restores it. Linux requires a desktop environment with AppIndicator support. If the tray cannot be created, closing the window exits the app.
+
 Open **Settings → Yapmod → Desktop** to manage notifications, see the installed versions, or check for an app update. Enable **Launch at login** to open Yapmod Desktop automatically when you sign in to this computer. The setting is off on a fresh installation. Yapin controls which messages trigger alerts. Clicking a notification takes you back to the conversation when the OS delivers the click and the originating page is still open.
 
 | Component | How it updates |

@@ -17,7 +17,7 @@ rustls = { version = "0.23", default-features = false, features = ["ring"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
-tauri = { version = "2.12", features = ["unstable"] }
+tauri = { version = "2.12", features = ["unstable", "tray-icon"] }
 tauri-plugin-autostart = "2.7"
 tauri-plugin-dialog = "2"
 tauri-plugin-notification = "2.8"
