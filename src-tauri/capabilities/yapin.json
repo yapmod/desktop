@@ -13,6 +13,7 @@
   ],
   "permissions": [
     "allow-desktop-info",
+    "allow-desktop-set-badge",
     "allow-yaplay-start",
     "allow-yaplay-exchange",
     "allow-yaplay-stop",

@@ -1,5 +1,6 @@
 const COMMANDS: &[&str] = &[
     "open_yapin",
+    "desktop_set_badge",
     "yaplay_start",
     "yaplay_exchange",
     "yaplay_stop",

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Restore Yapin unread-count badges on the macOS Dock, supported Linux launchers, and Windows taskbar. Counts clear when read or navigating away and are capped at 99.
+
 - Enable file downloads from Yapin and show a native Save dialog to choose the filename and destination.
 
 ## v1.1.0

@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod badge;
 mod bundles;
 mod navigation;
 mod notifications;
@@ -26,6 +27,7 @@ fn main() {
         .manage(updates::UpdateLock::default())
         .invoke_handler(tauri::generate_handler![
             window::open_yapin,
+            badge::desktop_set_badge,
             yaplay::yaplay_start,
             yaplay::yaplay_exchange,
             yaplay::yaplay_stop,
