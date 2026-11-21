@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Expand the system tray with live call and microphone status, mute/deafen controls, Desktop settings, and a one-hour desktop notification snooze. Call controls work independently of Yaplay.
+- Expand the system tray with live call and microphone status, mute/deafen controls, and a one-hour desktop notification snooze. Call controls work independently of Yaplay.
 
 - Enable file downloads from Yapin and show a native Save dialog to choose the filename and destination.
 

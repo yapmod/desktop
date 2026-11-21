@@ -11,19 +11,12 @@ export default function desktopPlugin(_api: typeof yapmod, bridge: NativeBridge 
       connect(bridge);
       const notifications = installNotifications();
       const YaplaySettings = installYaplay(bridge);
-      const renderSettings = () => <DesktopSettings yaplay={YaplaySettings} requestPermission={() => notifications.requestPermission()} />;
-      let closeSettings: (() => void) | undefined;
-      installTray(bridge, () => {
-        if (closeSettings) return;
-        closeSettings = yapmod.ui.openModal({ title: 'Desktop settings', wide: true,
-          content: renderSettings, onClose: () => { closeSettings = undefined; } });
-      });
-      yapmod.onDispose(() => closeSettings?.());
+      installTray(bridge);
       yapmod.settings.registerSection({
         id: 'desktop',
         label: 'Desktop',
         icon: 'settings',
-        render: renderSettings,
+        render: () => <DesktopSettings yaplay={YaplaySettings} requestPermission={() => notifications.requestPermission()} />,
       });
     },
   };

@@ -26,7 +26,6 @@ pub struct CallState {
 #[serde(rename_all = "camelCase")]
 pub struct Reply {
     actions: Vec<crate::yaplay::Action>,
-    open_settings: bool,
 }
 
 #[derive(Default)]
@@ -35,7 +34,6 @@ struct State {
     seen: Option<Instant>,
     call: CallState,
     actions: Vec<crate::yaplay::Action>,
-    open_settings: bool,
     snooze_until: Option<Instant>,
 }
 impl State {
@@ -61,7 +59,6 @@ impl State {
         self.seen = Some(Instant::now());
         Ok(Reply {
             actions: std::mem::take(&mut self.actions),
-            open_settings: std::mem::take(&mut self.open_settings),
         })
     }
     fn clear(&mut self) {
@@ -69,7 +66,6 @@ impl State {
         self.seen = None;
         self.call = CallState::default();
         self.actions.clear();
-        self.open_settings = false;
     }
 }
 #[derive(Default)]
@@ -154,13 +150,6 @@ pub fn install(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     )?;
     let mute = MenuItem::with_id(app, "tray-mute", "Mute microphone", false, None::<&str>)?;
     let deafen = MenuItem::with_id(app, "tray-deafen", "Deafen", false, None::<&str>)?;
-    let settings = MenuItem::with_id(
-        app,
-        "tray-settings",
-        "Desktop settings…",
-        false,
-        None::<&str>,
-    )?;
     let snooze = MenuItem::with_id(
         app,
         "tray-snooze",
@@ -172,9 +161,7 @@ pub fn install(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let quit = MenuItem::with_id(app, "tray-quit", "Quit Yapmod Desktop", true, None::<&str>)?;
     let menu = Menu::with_items(
         app,
-        &[
-            &open, &settings, &separator, &status, &mute, &deafen, &snooze, &quit,
-        ],
+        &[&open, &separator, &status, &mute, &deafen, &snooze, &quit],
     )?;
     let icon = app
         .default_window_icon()
@@ -187,7 +174,7 @@ pub fn install(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         .on_menu_event(|app, event| match event.id.as_ref() {
             "tray-open" => crate::window::show(app),
             "tray-quit" => app.exit(0),
-            "tray-mute" | "tray-deafen" | "tray-settings" | "tray-snooze" => {
+            "tray-mute" | "tray-deafen" | "tray-snooze" => {
                 if let Ok(mut state) = app.state::<TrayState>().0.lock() {
                     match event.id.as_ref() {
                         "tray-snooze" => {
@@ -196,10 +183,6 @@ pub fn install(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
                             } else {
                                 Some(Instant::now() + Duration::from_secs(3600))
                             }
-                        }
-                        "tray-settings" if state.live() => {
-                            state.open_settings = true;
-                            crate::window::show(app);
                         }
                         "tray-mute"
                             if state.live()
@@ -288,7 +271,6 @@ pub fn install(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
                 "Deafen"
             });
             let _ = deafen.set_enabled(in_call);
-            let _ = settings.set_enabled(live);
             let _ = snooze.set_text(if snoozed {
                 "Resume desktop notifications"
             } else {
@@ -369,12 +351,10 @@ mod tests {
     fn snooze_survives_page_cleanup_but_expires() {
         let mut state = active();
         state.snooze_until = Some(Instant::now() + Duration::from_secs(3600));
-        state.open_settings = true;
         state.actions.push(Action::SetMute { muted: true });
         state.clear();
         assert!(state.snoozed());
         assert!(!state.live());
-        assert!(!state.open_settings);
         assert!(state.actions.is_empty());
         assert!(state.exchange("current", CallState::default()).is_err());
         state.snooze_until = Some(Instant::now() - Duration::from_secs(1));

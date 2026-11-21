@@ -2,7 +2,7 @@ import { type DesktopInfo, type NativeBridge } from './native';
 import { findStore, getRuntime, perform, type Action } from './yaplay/host';
 
 /** The tray works independently of the optional Yaplay connection. */
-export function installTray(bridge: NativeBridge, openSettings: () => void) {
+export function installTray(bridge: NativeBridge) {
   let session = '';
   let stopped = false;
   let running = false;
@@ -18,19 +18,18 @@ export function installTray(bridge: NativeBridge, openSettings: () => void) {
         started = true;
         if (stopped) { await bridge.invoke('tray_stop', { session }); return; }
       }
-      // Settings remain available while signed out or when voice discovery fails.
+      // Report unavailable controls while signed out or when voice discovery fails.
       const runtime = await getRuntime().catch(() => undefined);
       if (stopped) return;
       const store = runtime && findStore(runtime);
       const voice = store?.getState().voice;
       const channelId = voice?.channelId ?? null;
       const serverId = voice?.serverId ?? null;
-      const reply = await bridge.invoke<{ actions: Action[]; openSettings: boolean }>('tray_exchange', {
+      const reply = await bridge.invoke<{ actions: Action[] }>('tray_exchange', {
         session, call: { available: Boolean(store), channelId, serverId,
           muted: voice?.muted ?? false, deafened: voice?.deafened ?? false },
       });
       if (stopped) return;
-      if (reply.openSettings) openSettings();
       for (const action of reply.actions) {
         const current = store?.getState().voice;
         if (stopped || !runtime || !store || !current

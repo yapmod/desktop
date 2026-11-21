@@ -24,9 +24,7 @@ async function fixture() {
     if (typeof chunk[2] === 'function') modules.set(chunk[1], chunk[2]);
     else chunk[1].runtimeModuleIds.forEach(id => modules.get(id)(runtime));
   } };
-  let reply = () => ({ actions: [], openSettings: false });
-  let settingsOpened = 0;
-  let settingsClosed = 0;
+  let reply = () => ({ actions: [] });
   const bridge = { async invoke(command, args) {
     calls.push({ command, args });
     if (command === 'desktop_info') return { trayAvailable: true };
@@ -35,7 +33,7 @@ async function fixture() {
   } };
   const yapmod = {
     storage: {}, log() {}, solid, solidWeb: {}, onDispose: solid.onCleanup,
-    ui: { openModal(options) { settingsOpened++; return () => { settingsClosed++; options.onClose(); }; } },
+    ui: {},
     settings: { registerSection() {} },
   };
   const register = runInNewContext(source, { window, EventTarget, Event, CustomEvent, crypto: globalThis.crypto,
@@ -49,24 +47,22 @@ async function fixture() {
   return { window, state, calls, actions, timers, dispose,
     setReply(fn) { reply = fn; },
     async tick() { for (const fn of timers) fn(); await settle(); },
-    get settingsOpened() { return settingsOpened; }, get settingsClosed() { return settingsClosed; } };
+  };
 }
 
-test('tray controls and settings work without Yaplay and dispose cleanly on re-enable', async () => {
+test('tray controls work without Yaplay and dispose cleanly on re-enable', async () => {
   for (let activation = 0; activation < 2; activation++) {
     const f = await fixture();
     assert.equal(f.calls.some(call => call.command.startsWith('yaplay_')), false);
     assert.equal(f.timers.size, 1);
-    f.setReply(() => ({ actions: [{ type: 'set_mute', muted: true }], openSettings: true }));
+    f.setReply(() => ({ actions: [{ type: 'set_mute', muted: true }] }));
     await f.tick();
     await f.tick();
     assert.deepEqual(f.actions, ['mute']);
-    assert.equal(f.settingsOpened, 1);
     assert.equal(f.calls.filter(call => call.command === 'tray_exchange').at(-1).args.call.muted, true);
     f.dispose();
     await settle();
     assert.equal(f.timers.size, 0);
-    assert.equal(f.settingsClosed, 1);
     assert.equal(f.calls.at(-1).command, 'tray_stop');
   }
 });
@@ -79,7 +75,7 @@ test('tray discards a delayed control after changing calls or disabling the plug
     await f.tick();
     if (stop) f.dispose();
     else f.state.voice.channelId = 'another-room';
-    pending.resolve({ actions: [{ type: 'set_deafen', deafened: true }], openSettings: false });
+    pending.resolve({ actions: [{ type: 'set_deafen', deafened: true }] });
     await settle();
     assert.deepEqual(f.actions, []);
     f.dispose();
