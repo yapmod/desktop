@@ -22,10 +22,14 @@ fn main() {
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .manage(tray::TrayState::default())
         .manage(titlebar::TitlebarLayout::default())
         .manage(updates::UpdateLock::default())
         .invoke_handler(tauri::generate_handler![
             window::open_yapin,
+            tray::tray_start,
+            tray::tray_exchange,
+            tray::tray_stop,
             yaplay::yaplay_start,
             yaplay::yaplay_exchange,
             yaplay::yaplay_stop,
