@@ -7,7 +7,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use tauri::{
     AppHandle, LogicalPosition, LogicalSize, Manager, Url, Webview, WebviewUrl,
     WebviewWindowBuilder, Window, WindowBuilder, WindowEvent,
-    webview::{NewWindowFeatures, NewWindowResponse, PageLoadEvent, WebviewBuilder},
+    webview::{DownloadEvent, NewWindowFeatures, NewWindowResponse, PageLoadEvent, WebviewBuilder},
 };
 
 static POPUP_ID: AtomicU64 = AtomicU64::new(0);
@@ -162,6 +162,7 @@ fn attach_yapin(window: &Window) -> tauri::Result<()> {
         WebviewUrl::External("about:blank".parse().unwrap()),
     )
     .disable_drag_drop_handler()
+    .on_download(download)
     .on_navigation(navigation::embedded)
     .on_new_window(move |url, features| popup(&popup_app, url, features))
     .on_page_load(|page, load| {
@@ -182,6 +183,7 @@ fn attach_yapin(window: &Window) -> tauri::Result<()> {
         let _ = page.show();
         let _ = page.set_focus();
         if navigation::is_yapin(load.url()) {
+            let _ = page.eval(include_str!("../webview/downloads.js"));
             let _ = page.eval(titlebar::initialization_script());
             load_client(page);
         }
@@ -207,4 +209,29 @@ fn attach_yapin(window: &Window) -> tauri::Result<()> {
         .state::<TitlebarLayout>()
         .fit(&page, viewport(window)?)?;
     page.navigate(navigation::ENTRY.parse().expect("valid Yapin URL"))
+}
+
+fn download(page: Webview, event: DownloadEvent<'_>) -> bool {
+    match event {
+        DownloadEvent::Requested { destination, .. } => {
+            // The WebView requires a destination synchronously on the UI thread.
+            // The plugin's blocking dialog waits on that thread and would deadlock;
+            // rfd's synchronous dialog runs the native modal event loop instead.
+            let mut dialog = rfd::FileDialog::new()
+                .set_parent(&page.window())
+                .set_title("Save download");
+            if let Some(name) = destination.file_name() {
+                dialog = dialog.set_file_name(name.to_string_lossy());
+            }
+            if let Some(directory) = destination.parent() {
+                dialog = dialog.set_directory(directory);
+            }
+            let Some(path) = dialog.save_file() else {
+                return false;
+            };
+            *destination = path;
+            true
+        }
+        _ => true,
+    }
 }
