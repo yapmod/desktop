@@ -18,7 +18,7 @@ function fixture(invoke, storage = {}) {
     log() {},
     onDispose(disposer) { disposers.push(disposer); },
   };
-  const register = runInNewContext(source, { window, EventTarget, Event, crypto: globalThis.crypto });
+  const register = runInNewContext(source, { window, EventTarget, Event, CustomEvent, crypto: globalThis.crypto });
   register({
     registerClientPlugin(plugin) {
       assert.equal(plugin.id, "client:yapmod-desktop");
@@ -102,11 +102,11 @@ test("the SDK output runs through Yapmod's plugin lifecycle with the shared nati
   const disposers = [];
   const sections = [];
   const yapmod = {
-    storage: {}, ui: {}, solid: {}, solidWeb: {},
+    storage: {}, ui: {}, solid: { createSignal: (value) => [() => value, next => { value = next; }] }, solidWeb: {},
     settings: { registerSection(section) { sections.push(section); } },
     onDispose(disposer) { disposers.push(disposer); },
   };
-  const factory = runInNewContext(expression, { window, yapmod, EventTarget, Event });
+  const factory = runInNewContext(expression, { window, yapmod, EventTarget, Event, CustomEvent });
   for (let activation = 0; activation < 2; activation++) {
     factory(yapmod).onLoad();
     await settle();

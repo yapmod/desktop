@@ -10,6 +10,7 @@ mod titlebar;
 mod tray;
 mod updates;
 mod window;
+mod yaplay;
 
 use tauri::Manager;
 
@@ -25,6 +26,9 @@ fn main() {
         .manage(updates::UpdateLock::default())
         .invoke_handler(tauri::generate_handler![
             window::open_yapin,
+            yaplay::yaplay_start,
+            yaplay::yaplay_exchange,
+            yaplay::yaplay_stop,
             titlebar::set_integrated_titlebar,
             titlebar::window_caption,
             updates::desktop_info,
@@ -36,6 +40,7 @@ fn main() {
         .setup(|app| {
             app.manage(bundles::BundleStore::new(app.path().app_cache_dir()?));
             notifications::install(app.handle())?;
+            yaplay::install(app.handle());
             window::create(app.handle())?;
             if let Err(error) = tray::install(app.handle()) {
                 eprintln!("Could not create the system tray: {error}");

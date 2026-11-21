@@ -1,9 +1,9 @@
 import { Button, Section, SettingRow, SettingsPage, SettingText, Switch } from '@yapmod/ui';
-import { createSignal, onCleanup } from 'solid-js';
+import { type Component, createSignal, onCleanup } from 'solid-js';
 import { AutostartSetting } from './AutostartSetting';
 import { invoke, type DesktopInfo } from './native';
 
-export function DesktopSettings(props: { requestPermission(): Promise<NotificationPermission> }) {
+export function DesktopSettings(props: { yaplay?: Component; requestPermission(): Promise<NotificationPermission> }) {
   const [info, setInfo] = createSignal<DesktopInfo>();
   const [busy, setBusy] = createSignal(false);
   const [available, setAvailable] = createSignal<string | null>(null);
@@ -51,6 +51,7 @@ export function DesktopSettings(props: { requestPermission(): Promise<Notificati
         </SettingRow>
       </Section>
       {info()?.autostartAvailable && <AutostartSetting />}
+      {props.yaplay && <props.yaplay />}
       <Section label="Software">
         <SettingText label="Desktop version" value={info()?.version ?? '—'} />
         <SettingText label="Client version" value={window.YapmodClient?.version ?? '—'} />
