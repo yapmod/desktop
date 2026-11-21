@@ -16,6 +16,14 @@ Yapin provides the sign-in form and available sign-in methods. Google sign-in de
 
 The main window has a minimum content size of 560 × 420 logical pixels. Sign-in popups can be as small as 360 × 400. On smaller displays, the opening size and minimum fit the available work area.
 
+## Microphone and camera permissions
+
+On macOS and Windows, Yapin's microphone and camera requests use the WebView's permission prompts and respect system privacy settings. Access is requested when Yapin needs a device, not when the desktop app starts. The browser may remember an earlier permission decision. New media requests from the local shell, sign-in popups, and pages outside Yapin are denied.
+
+If system access was denied, check **System Settings → Privacy & Security → Microphone / Camera** on macOS, or **Settings → Privacy & security → Microphone / Camera** on Windows, including access for desktop apps. Restart the app after changing system permissions.
+
+This permission handling does not establish full voice/video call compatibility. Linux calling remains unsupported; a future Linux release may bundle CEF to provide Chromium's WebRTC implementation.
+
 ## Settings and updates
 
 Open **Settings → Yapmod → Desktop** to manage notifications, see the installed versions, or check for an app update. Enable **Launch at login** to open Yapmod Desktop automatically when you sign in to this computer. The setting is off on a fresh installation. Yapin controls which messages trigger alerts. Clicking a notification takes you back to the conversation when the OS delivers the click and the originating page is still open.
