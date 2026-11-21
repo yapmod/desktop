@@ -13,6 +13,17 @@ use tauri::{
 static POPUP_ID: AtomicU64 = AtomicU64::new(0);
 const SIGN_IN_MINIMUM: LogicalSize<f64> = LogicalSize::new(360., 400.);
 
+pub fn show(app: &AppHandle) {
+    if let Some(window) = app.get_window("main") {
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+        if let Some(page) = app.get_webview("yapin") {
+            let _ = page.set_focus();
+        }
+    }
+}
+
 fn viewport(window: &Window) -> tauri::Result<LogicalSize<f64>> {
     Ok(window.inner_size()?.to_logical(window.scale_factor()?))
 }
@@ -48,6 +59,15 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
     attach_yapin(&window)?;
     let handle = app.clone();
     window.on_window_event(move |event| {
+        if let WindowEvent::CloseRequested { api, .. } = event
+            && handle.tray_by_id(crate::tray::ID).is_some()
+            && let Some(window) = handle.get_window("main")
+        {
+            match window.hide() {
+                Ok(()) => api.prevent_close(),
+                Err(error) => eprintln!("Could not hide the main window: {error}"),
+            }
+        }
         if matches!(
             event,
             WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. }

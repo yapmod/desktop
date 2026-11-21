@@ -153,10 +153,7 @@ pub fn install(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         let (Some(notification), Some(webview)) = (action.notification(), handle.get_webview("yapin")) else {
             return;
         };
-        let window = webview.window();
-        let _ = window.show();
-        let _ = window.unminimize();
-        let _ = window.set_focus();
+        crate::window::show(&handle);
         if check_source(&webview).is_ok() {
             let _ = webview.set_focus();
             let id = notification.id();
