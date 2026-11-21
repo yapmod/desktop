@@ -373,7 +373,6 @@ mod tests {
     async fn websocket_replays_state_receives_controls_and_clears_on_stop() {
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let port = listener.local_addr().unwrap().port();
-        let (ready, received) = tokio::sync::oneshot::channel();
         let server = tokio::spawn(async move {
             let (stream, _) = listener.accept().await.unwrap();
             let mut socket = accept_async(stream).await.unwrap();
@@ -387,12 +386,13 @@ mod tests {
                     .unwrap();
             assert_eq!(serde_json::json!(messages), contract["outgoing"]);
             for action in contract["controls"].as_array().unwrap() {
+                // Controls may arrive in different polling cycles, especially on CI.
+                tokio::time::sleep(Duration::from_millis(20)).await;
                 socket
                     .send(Message::Text(action.to_string().into()))
                     .await
                     .unwrap();
             }
-            ready.send(()).unwrap();
             let text = socket.next().await.unwrap().unwrap().into_text().unwrap();
             assert_eq!(text, EMPTY);
             let _ = socket.next().await;
@@ -416,12 +416,22 @@ mod tests {
         .await
         .unwrap();
         assert!(first.connected);
-        received.await.unwrap();
-        let second = exchange(&mut c, snapshot(), vec![]).await.unwrap();
-        let actions: Vec<_> = first.actions.iter().chain(&second.actions).collect();
+        let mut actions = first.actions;
         let contract: serde_json::Value =
             serde_json::from_str(include_str!("../../plugin/test/fixtures/yaplay-v1.json"))
                 .unwrap();
+        // Sending a frame does not guarantee it has reached the peer. Keep the
+        // production poll short and wait for the complete contract in the test.
+        tokio::time::timeout(DEADLINE, async {
+            while actions.len() < contract["controls"].as_array().unwrap().len() {
+                let reply = exchange(&mut c, snapshot(), vec![]).await.unwrap();
+                assert!(reply.connected);
+                actions.extend(reply.actions);
+                tokio::time::sleep(Duration::from_millis(5)).await;
+            }
+        })
+        .await
+        .expect("all Yaplay controls should arrive before the test deadline");
         assert_eq!(serde_json::to_value(actions).unwrap(), contract["controls"]);
         clear(&mut c).await;
         tokio::time::timeout(DEADLINE, server)
