@@ -183,6 +183,7 @@ fn attach_yapin(window: &Window) -> tauri::Result<()> {
         let _ = page.show();
         let _ = page.set_focus();
         if navigation::is_yapin(load.url()) {
+            let _ = page.eval(include_str!("../webview/downloads.js"));
             let _ = page.eval(titlebar::initialization_script());
             load_client(page);
         }
