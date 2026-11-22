@@ -75,6 +75,9 @@ jobs:
       TARGET: ${{ matrix.target }}
       BUNDLES: ${{ matrix.bundles }}
     steps:
+      - name: Preserve release source line endings
+        if: runner.os == 'Windows'
+        run: git config --global core.autocrlf false
       - uses: actions/checkout@v6
         with:
           ref: refs/tags/${{ inputs.tag }}
