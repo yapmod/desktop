@@ -29,6 +29,11 @@ export function promote(content, entry) {
 }
 
 export class ManualChangelog extends Node {
+  async getBranchComponent() {
+    // The single desktop package uses the componentless manifest release branch.
+    return this.getComponent();
+  }
+
   async buildReleaseNotes(_commits, version) {
     const file = await this.github.getFileContentsOnBranch(
       this.addPath(this.changelogPath),

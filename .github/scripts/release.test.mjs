@@ -5,6 +5,7 @@ import test from "node:test";
 import { ManualChangelog, updateCargoVersion, section, promote } from "./manual-changelog.mjs";
 import { parseConventionalCommits } from "release-please/build/src/commit.js";
 import { Version } from "release-please/build/src/version.js";
+import { Merge } from "release-please/build/src/plugins/merge.js";
 import { TagName } from "release-please/build/src/util/tag-name.js";
 import { releaseMessage } from "./announce-release.mjs";
 
@@ -47,12 +48,21 @@ test("release proposal synchronizes Node and Cargo versions and preserves author
     assert.equal(ref, "approved");
     return { parsedContent: updated };
   };
+  // Production merges candidates into a componentless manifest PR.
+  const [candidate] = await new Merge(github, "main", {
+    ".": { releaseType: "manual-node" },
+  }, { forceMerge: true }).run([{ path: ".", config: { releaseType: "manual-node" }, pullRequest: pr }]);
+  const merged = candidate.pullRequest;
+  assert.equal(merged.headRefName, "release-please--branches--main");
   const release = await strategy.buildRelease({
-    title: pr.title.toString(),
-    body: pr.body.toString(),
-    headBranchName: pr.headRefName,
+    title: merged.title.toString(),
+    body: merged.body.toString(),
+    headBranchName: merged.headRefName,
     sha: "approved",
   });
+  assert.ok(release, "The merged manifest PR must produce a release");
+  assert.equal(release.tag.toString(), "v1.2.0");
+  assert.equal(release.sha, "approved");
   assert.ok(release.notes.endsWith(notes));
 });
 
@@ -73,7 +83,35 @@ test("Cargo updates only touch the desktop package", () => {
 test("Python publishing recognizes both historical and new changelog headings", () => {
   execFileSync(process.env.PYTHON || "python3", [
     "-c",
-    "import runpy; r=runpy.run_path('scripts/release.py'); assert r['changelog_section']('Unreleased'); assert r['changelog_section']('v1.1.0')",
+    `import runpy
+import tempfile
+from pathlib import Path
+
+section = runpy.run_path('scripts/release.py')['changelog_section']
+with tempfile.TemporaryDirectory() as directory:
+    root = Path(directory)
+    section.__globals__['ROOT'] = root
+    changelog = root / 'CHANGELOG.md'
+    for heading, title in [
+        ('Unreleased', 'Unreleased'),
+        ('[Unreleased]', 'Unreleased'),
+        ('v1.1.0', 'v1.1.0'),
+        ('[1.2.0]', 'v1.2.0'),
+        ('[1.2.0] — 2026-11-22', 'v1.2.0'),
+    ]:
+        changelog.write_text(f'# Changelog\\n\\n## {heading}\\n\\n- Authored notes.\\n\\n## v1.0.0\\n\\n- Older notes.\\n', encoding='utf-8')
+        assert section(title) == '- Authored notes.', heading
+
+    changelog.write_text('# Changelog\\n\\n## [Unreleased]\\n\\n## [1.2.0] — 2026-11-22\\n\\n- Released notes.\\n', encoding='utf-8')
+    assert section('v1.2.0') == '- Released notes.'
+    for title in ['Unreleased', 'v9.9.9']:
+        try:
+            section(title)
+        except ValueError as error:
+            assert 'Missing release notes' in str(error)
+        else:
+            raise AssertionError(f'Expected missing notes to be rejected: {title}')
+`,
   ]);
 });
 
