@@ -2,7 +2,7 @@
 
 Host releases in a public GitHub repository so installed apps can download updates without an access token. The workflow reads the repository name from `GITHUB_REPOSITORY`. The Yapmod client follows stable releases of `yapmod/client` on its own schedule.
 
-Pull requests and pushes to `main` run formatting and tests on Linux. A version tag triggers the macOS, Windows, and Linux installer builds.
+Pull requests and pushes to `main` run formatting and tests on Linux. Merging the rolling release PR triggers the macOS, Windows, and Linux installer builds.
 
 ## Direct distribution
 
@@ -32,29 +32,22 @@ gh secret set TAURI_SIGNING_PRIVATE_KEY_PASSWORD --repo yapmod/desktop
 
 You can also enter the values under **Settings → Secrets and variables → Actions**. Put the public key under **Variables**, and the private key and password under **Secrets**. The workflows use the repository's automatic GitHub token to publish releases. [Repository Actions settings](https://github.com/yapmod/desktop/settings/secrets/actions)
 
-Once **Checks** passes on `main` and the signing values are in place, tag the commit you intend to ship.
+Enable **Settings → Actions → General → Allow GitHub Actions to create and approve pull requests**. Require **Format and test** in branch protection. The built-in token opens the release PR and explicitly dispatches its checks and publishing workflows.
 
-```sh
-git tag v1.0.0
-git push origin refs/tags/v1.0.0
-```
+Set the repository secret `YAPIN_RELEASE_WEBHOOK_URL` to the same webhook used by `yapmod/client`, and the variable `YAPIN_RELEASE_ROLE_ID` to the Yapmod role ID. Only that role is pinged.
 
 ## Publishing a stable release
 
-The first release uses the tag `v1.0.0`, and its notes are already in the changelog. For later releases, add user-facing changes under `## Unreleased`. From the project root, use Python 3.11 or later to prepare the next version. Review the diff before tagging.
+1. Write concise user-facing bullets under `## [Unreleased]` in `CHANGELOG.md` in each product PR. Group them under Added, Changed, Fixed, or Removed and use inline links. Source changes require changed notes in CI; docs, tests, and tooling-only PRs do not.
+2. Squash-merge with a Conventional Commit title: `fix:` selects a patch, `feat:` a minor, and `!` or `BREAKING CHANGE:` a major.
+3. Release Please refreshes one release PR with the accumulated hand-written notes. Review its versions, notes, and checks, then merge when ready to ship.
+4. The workflow creates a stable tag and draft release, dispatches **Release desktop**, and publishes only after all installers and signatures have been verified and uploaded. A successful publication announces the release on Yapin.
 
-```sh
-python3 scripts/release.py prepare 1.0.1
-git diff
-git add CHANGELOG.md package.json src-tauri/Cargo.toml src-tauri/Cargo.lock
-git commit -m "chore(release): v1.0.1"
-git tag v1.0.1
-git push --atomic origin HEAD refs/tags/v1.0.1
-```
+Automation updates `package.json`, `src-tauri/Cargo.toml`, and the desktop package in `src-tauri/Cargo.lock` together. Tauri reads its version from `package.json`. It moves notes beneath a version/date heading without generating prose and leaves an empty Unreleased section. Empty notes produce no release. Edit notes through ordinary PRs against main; direct edits to the release branch are overwritten on refresh. Published notes come from the changelog at the approved tag.
 
-The script updates the app version in `package.json`, `Cargo.toml`, and `Cargo.lock`, then moves the unreleased notes under the new version. Tauri reads its version from `package.json`.
+The migration starts from the existing `v1.1.0` tag and includes the current Unreleased entries in the next proposal. Merging the migration only opens that proposal; it does not publish installers. The independently published `plugins-v1` prerelease is excluded from desktop announcements.
 
-On a `vX.Y.Z` tag, **Release desktop** runs the tests, builds the packages on each OS, and signs the updates. The publish job verifies each signature with the configured public key and assembles a single `latest.json` manifest. The GitHub Release becomes public once all files have been uploaded.
+The pinned Release Please library runs the local `manual-node` strategy. Do not use its stock action or CLI, which would omit the custom notes and Cargo updates.
 
 | Platform | First installation | Subsequent updates |
 | --- | --- | --- |
@@ -65,7 +58,17 @@ On a `vX.Y.Z` tag, **Release desktop** runs the tests, builds the packages on ea
 
 The updater reads `https://github.com/yapmod/desktop/releases/latest/download/latest.json` and checks the downloaded package against the signature in the manifest. [Tauri updater](https://v2.tauri.app/plugin/updater/)
 
-If a job fails, fix the cause and rerun the affected jobs. Uploads can resume on an existing draft release. To correct a public release, publish a higher version with its own notes and tag.
+If a job fails, rerun it or dispatch **Release desktop** from `main` with the existing tag:
+
+```sh
+gh workflow run desktop.yml --ref main -f tag=v1.2.0
+```
+
+Use the failed release’s actual tag. The workflow checks out that tag, verifies it belongs to `main`, and checks the version and release manifest. Already-public releases are skipped; drafts can resume. To correct a public release, publish a higher version through the release PR.
+
+Publishing with `GITHUB_TOKEN` does not trigger release events, so the publisher explicitly calls **Announce release on Yapin**. Manual publication is covered by the release event. If announcement delivery fails, rerun that job; to resend, dispatch the announcement workflow with the published tag. Resending posts another message. Delivery failures do not roll back the release. Notes are shortened at complete lines to fit the message limit, with a link to the full release.
+
+If checks were not dispatched, run **Checks** on the release branch. If proposal creation fails, correct permissions and rerun **Release Please** on main.
 
 ## Publishing the desktop plugin
 
