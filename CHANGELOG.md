@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-11-22
+
 ### Added
 
 - Expand the system tray with live call and microphone status, mute/deafen controls, and a one-hour desktop notification snooze. Call controls work independently of Yaplay.
