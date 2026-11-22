@@ -92,3 +92,11 @@ uv run --script scripts/release-dmg.py \
 ```
 
 The script verifies the image with `hdiutil verify`. Open it in Finder to check the background and the positions of the app and the Applications shortcut. [dmgbuild](https://github.com/dmgbuild/dmgbuild)
+
+## Release announcement design
+
+Published stable releases send a short, branded embed with a non-empty role mention and two buttons: downloads and the release notes website. Notes are excerpted at complete lines within 650 characters. A local PNG generator uses the project's logo, colors, and Geist fonts; no image-generation service is needed. The banner is stored on the dedicated `release-banners` branch and linked through a commit-pinned raw GitHub URL so Yapin can proxy it.
+
+The announcement job needs `contents: write` for its image branch. It reuses the Actions run ID as the webhook nonce: retries within ten minutes do not post duplicates. A new manual workflow run intentionally sends another message. After a timeout outside that window, check the channel before retrying.
+
+Install banner tooling with `npm ci --prefix .github/announcement`. Generate a local PNG with `node .github/announcement/banner.mjs releases.json banner.png`, passing a JSON array of stable release objects.

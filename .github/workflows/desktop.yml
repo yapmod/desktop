@@ -187,6 +187,8 @@ jobs:
           echo 'published=true' >> "$GITHUB_OUTPUT"
 
   announce:
+    permissions:
+      contents: write
     needs: publish
     if: needs.publish.outputs.published == 'true'
     uses: ./.github/workflows/announce-release.yml

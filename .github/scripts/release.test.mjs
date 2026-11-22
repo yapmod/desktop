@@ -126,7 +126,7 @@ test("desktop announcements retain notes, ping only the chosen role, and reject 
   const role = "33367aaa-f65b-4e1c-a870-8f0041a437dc";
   const message = releaseMessage(release, role);
   assert.ok(message.content.includes("Yapmod Desktop v1.2.0"));
-  assert.ok(message.content.includes(notes));
+  assert.ok(message.embeds[0].description.includes("- Choose where to save downloaded files."));
   assert.deepEqual(message.allowed_mentions, { parse: [], roles: [role] });
   assert.throws(() =>
     releaseMessage({ ...release, tag_name: "plugins-v1", prerelease: true }, role),
