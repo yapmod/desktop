@@ -45,6 +45,10 @@ Set the repository secret `YAPIN_RELEASE_WEBHOOK_URL` to the same webhook used b
 
 Automation updates `package.json`, `src-tauri/Cargo.toml`, and the desktop package in `src-tauri/Cargo.lock` together. Tauri reads its version from `package.json`. It moves notes beneath a version/date heading without generating prose and leaves an empty Unreleased section. Empty notes produce no release. Edit notes through ordinary PRs against main; direct edits to the release branch are overwritten on refresh. Published notes come from the changelog at the approved tag.
 
+A version/date heading records the version approved by a merged release PR; it does not prove that installers are public. Check the GitHub release status. An empty Unreleased section is valid while that approved version is building or waiting for recovery.
+
+If a release PR was merged but no tag or draft was created, inspect the Release Please logs before retrying. If the approved commit itself needs a fix (including a failing test), do not publish or retag that commit. Remove `autorelease: pending` from the superseded merged PR, then restore its notes to Unreleased and the package, Cargo, and manifest versions to the last published version in a repair PR. Merge the repair and let Release Please prepare a fresh release PR for the still-unpublished version. Merge that new proposal to publish the corrected source. Never use this recovery for a version that is already public.
+
 The migration starts from the existing `v1.1.0` tag and includes the current Unreleased entries in the next proposal. Merging the migration only opens that proposal; it does not publish installers. The independently published `plugins-v1` prerelease is excluded from desktop announcements.
 
 The pinned Release Please library runs the local `manual-node` strategy. Do not use its stock action or CLI, which would omit the custom notes and Cargo updates.
