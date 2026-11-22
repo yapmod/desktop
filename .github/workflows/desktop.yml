@@ -24,6 +24,9 @@ env:
 
 jobs:
   verify:
+    # GitHub only exposes draft releases to tokens with repository write access.
+    permissions:
+      contents: write
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     outputs:
