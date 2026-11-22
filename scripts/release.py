@@ -34,7 +34,7 @@ def stable_version(value):
 def changelog_section(title):
     log = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     match = re.search(
-        rf"^## {re.escape(title)}\n(.*?)(?=^## |\Z)", log, re.MULTILINE | re.DOTALL
+        rf"^## (?:{re.escape(title)}|\[{re.escape(title.removeprefix('v'))}\](?: — \d{{4}}-\d{{2}}-\d{{2}})?)\n(.*?)(?=^## |\Z)", log, re.MULTILINE | re.DOTALL
     )
     if not match or not match[1].strip():
         raise ValueError(f"Missing release notes under '## {title}' in CHANGELOG.md")
@@ -48,6 +48,10 @@ def check_version(tag):
         raise ValueError(
             f"Tag, package.json and Cargo versions must match: {tag}, {version}, {crate['version']}"
         )
+    locked = tomllib.loads((TAURI / "Cargo.lock").read_text())["package"]
+    app_versions = [entry["version"] for entry in locked if entry["name"] == crate["name"]]
+    if app_versions != [version]:
+        raise ValueError("Cargo.lock must match the desktop version")
     return version
 
 
@@ -75,7 +79,7 @@ def prepare(version):
         )
     log_path = ROOT / "CHANGELOG.md"
     log = log_path.read_text(encoding="utf-8").replace(
-        "## Unreleased\n", f"## Unreleased\n\n## v{version}\n", 1
+        "## [Unreleased]\n", f"## [Unreleased]\n\n## [{version}]\n", 1
     )
     package["version"] = version
     write_json(ROOT / "package.json", package)

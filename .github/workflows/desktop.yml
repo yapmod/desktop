@@ -1,22 +1,56 @@
 name: Release desktop
 
 on:
-  push:
-    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Approved stable release tag (vX.Y.Z); also used for retries"
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: desktop-${{ github.ref }}
+  group: desktop-publish
   cancel-in-progress: false
 
 defaults:
   run:
     shell: bash
 
+env:
+  RELEASE_TAG: ${{ inputs.tag }}
+
 jobs:
+  verify:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.release.outputs.publish }}
+    steps:
+      - name: Validate stable tag
+        run: '[[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]'
+      - uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify approved source and release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git merge-base --is-ancestor HEAD origin/main
+          python3 scripts/release.py notes "$RELEASE_TAG" > /dev/null
+          python3 -c 'import json, os; assert "v" + json.load(open(".release-please-manifest.json"))["."] == os.environ["RELEASE_TAG"]'
+          gh release view "$RELEASE_TAG" --json isDraft,isPrerelease > state.json
+          jq -e '.isPrerelease == false' state.json > /dev/null
+          echo "publish=$(jq -r .isDraft state.json)" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: verify
+    if: needs.verify.outputs.publish == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -40,6 +74,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: refs/tags/${{ inputs.tag }}
           persist-credentials: false
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
@@ -48,7 +83,7 @@ jobs:
           cache: pnpm
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: "3.12"
       - name: Install Rust
         run: rustup update stable --no-self-update && rustup default stable
       - name: Add both macOS architectures
@@ -77,7 +112,7 @@ jobs:
           APPIMAGE_EXTRACT_AND_RUN: 1
         run: |
           : "${TAURI_SIGNING_PRIVATE_KEY:?Configure the signing key in GitHub Actions secrets}"
-          python scripts/release.py config "$GITHUB_REF_NAME" ci-updater.json
+          python scripts/release.py config "$RELEASE_TAG" ci-updater.json
           pnpm tauri build --ci --target "$TARGET" --bundles "$BUNDLES" --config ci-updater.json -- --locked
       - name: Create the styled disk image
         if: runner.os == 'macOS'
@@ -107,14 +142,16 @@ jobs:
           compression-level: 0
 
   publish:
-    if: github.ref_type == 'tag'
     needs: build
+    outputs:
+      published: ${{ steps.publish.outputs.published }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: refs/tags/${{ inputs.tag }}
           persist-credentials: false
       - uses: actions/download-artifact@v8
         with:
@@ -127,19 +164,33 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y minisign
-          python3 scripts/release.py manifest deliverables "$GITHUB_REF_NAME"
-          python3 scripts/release.py notes "$GITHUB_REF_NAME" > release-notes.md
+          python3 scripts/release.py manifest deliverables "$RELEASE_TAG"
+          python3 scripts/release.py notes "$RELEASE_TAG" > release-notes.md
       - name: Publish the complete desktop release
+        id: publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag="$GITHUB_REF_NAME"
-          if gh release view "$tag" --json isDraft > state.json 2>/dev/null; then
-            jq -e '.isDraft' state.json >/dev/null || { echo "Release $tag is already public"; exit 1; }
-          else
-            gh release create "$tag" --verify-tag --draft --title "Yapmod Desktop $tag" --notes-file release-notes.md
+          tag="$RELEASE_TAG"
+          gh release view "$tag" --json isDraft > state.json
+          if ! jq -e '.isDraft' state.json > /dev/null; then
+            echo 'published=false' >> "$GITHUB_OUTPUT"
+            exit 0
           fi
           gh release upload "$tag" deliverables/* --clobber
+          latest_tag="$(gh release view --json tagName --jq .tagName)"
+          export LATEST_TAG="$latest_tag"
+          make_latest="$(python3 -c 'import os; version=lambda s: tuple(map(int,s.removeprefix("v").split("."))); print(str(version(os.environ["RELEASE_TAG"]) >= version(os.environ["LATEST_TAG"])).lower())')"
           release_id="$(gh release view "$tag" --json databaseId --jq .databaseId)"
           gh api --silent --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" \
-            -F draft=false -f make_latest=legacy -F body=@release-notes.md
+            -F draft=false -f make_latest="$make_latest" -F body=@release-notes.md
+          echo 'published=true' >> "$GITHUB_OUTPUT"
+
+  announce:
+    needs: publish
+    if: needs.publish.outputs.published == 'true'
+    uses: ./.github/workflows/announce-release.yml
+    with:
+      tag: ${{ inputs.tag }}
+    secrets:
+      YAPIN_RELEASE_WEBHOOK_URL: ${{ secrets.YAPIN_RELEASE_WEBHOOK_URL }}
