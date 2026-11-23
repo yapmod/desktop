@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.2.1] — 2026-11-23
+
 ### Fixed
 
 - Allow the packaged macOS app to request microphone and camera access for Yapin calls.
