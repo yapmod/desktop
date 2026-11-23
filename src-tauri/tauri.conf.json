@@ -22,6 +22,7 @@
     },
     "macOS": {
       "signingIdentity": "-",
+      "entitlements": "Entitlements.plist",
       "dmg": {
         "background": "assets/dmg-background.png",
         "windowSize": { "width": 642, "height": 406 },

@@ -131,6 +131,12 @@ jobs:
           hdiutil attach -readonly -nobrowse -mountpoint "$mounted" "$image"
           trap 'hdiutil detach "$mounted"' EXIT
           codesign --verify --strict --deep "$mounted/Yapmod Desktop.app"
+          for arch in arm64 x86_64; do
+            codesign --display --arch "$arch" --entitlements - --xml "$mounted/Yapmod Desktop.app" > "$RUNNER_TEMP/media-entitlements.plist"
+            for device in audio-input camera; do
+              test "$(/usr/libexec/PlistBuddy -c "Print :com.apple.security.device.$device" "$RUNNER_TEMP/media-entitlements.plist")" = true
+            done
+          done
       - name: Collect installers and update signatures
         run: |
           shopt -s nullglob
