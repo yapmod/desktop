@@ -1,3 +1,4 @@
+use std::collections::BTreeSet;
 use std::time::{Duration, Instant};
 
 use futures_util::{SinkExt, StreamExt};
@@ -72,6 +73,28 @@ pub enum Action {
     SetDeafen { deafened: bool },
     LeaveCall {},
 }
+impl Action {
+    fn name(&self) -> &'static str {
+        match self {
+            Self::SetMute { .. } => "set_mute",
+            Self::SetDeafen { .. } => "set_deafen",
+            Self::LeaveCall {} => "leave_call",
+        }
+    }
+}
+
+const ALL_ACTIONS: [&str; 3] = ["set_mute", "set_deafen", "leave_call"];
+const ACK_TIMEOUT: Duration = Duration::from_millis(1500);
+
+#[derive(Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+enum Handshake {
+    HelloAck {
+        version: u8,
+        actions: BTreeSet<String>,
+    },
+}
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Notice {
@@ -87,11 +110,30 @@ pub struct Reply {
 struct Connection {
     session: String,
     port: u16,
+    offered: BTreeSet<String>,
+    accepted: BTreeSet<String>,
+    ack_deadline: Option<Instant>,
     socket: Option<Socket>,
     last: Option<Snapshot>,
     retry: Instant,
     seen: Instant,
 }
+impl Connection {
+    fn new(session: String, port: u16, offered: BTreeSet<String>) -> Self {
+        Self {
+            session,
+            port,
+            offered,
+            accepted: BTreeSet::new(),
+            ack_deadline: None,
+            socket: None,
+            last: None,
+            retry: Instant::now(),
+            seen: Instant::now(),
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct Yaplay(Mutex<Option<Connection>>);
 
@@ -123,23 +165,25 @@ pub async fn yaplay_start(
     state: tauri::State<'_, Yaplay>,
     session: String,
     port: u16,
+    actions: Option<BTreeSet<String>>,
 ) -> Result<(), String> {
     source(&webview)?;
     if port == 0 || session.is_empty() || session.len() > 64 {
         return Err("Invalid Yaplay session or port".into());
     }
+    // Earlier desktop plugins implemented all three controls and omitted this argument.
+    let offered = actions.unwrap_or_else(|| ALL_ACTIONS.map(String::from).into());
+    if offered
+        .iter()
+        .any(|name| !ALL_ACTIONS.contains(&name.as_str()))
+    {
+        return Err("Invalid Yaplay action".into());
+    }
     let mut guard = state.0.lock().await;
     if let Some(old) = guard.as_mut() {
         clear(old).await;
     }
-    *guard = Some(Connection {
-        session,
-        port,
-        socket: None,
-        last: None,
-        retry: Instant::now(),
-        seen: Instant::now(),
-    });
+    *guard = Some(Connection::new(session, port, offered));
     Ok(())
 }
 #[tauri::command]
@@ -219,9 +263,11 @@ async fn exchange(
         .map_err(|e| e.to_string())?;
         send(
             &mut socket,
-            r#"{"type":"hello","version":1,"controls":true}"#.into(),
+            serde_json::json!({"type":"hello","version":2,"name":"Yapmod Desktop","actions":c.offered}).to_string(),
         )
         .await?;
+        c.accepted.clear();
+        c.ack_deadline = Some(Instant::now() + ACK_TIMEOUT);
         c.socket = Some(socket);
         c.last = None;
     }
@@ -253,7 +299,17 @@ async fn exchange(
         match tokio::time::timeout(Duration::from_millis(1), socket.next()).await {
             Ok(Some(Ok(Message::Text(text)))) => {
                 if let Ok(action) = serde_json::from_str::<Action>(&text) {
-                    actions.push(action);
+                    if c.accepted.contains(action.name()) {
+                        actions.push(action);
+                    }
+                } else if c.ack_deadline.is_some()
+                    && let Ok(Handshake::HelloAck {
+                        version: 2,
+                        actions,
+                    }) = serde_json::from_str(&text)
+                {
+                    c.accepted = c.offered.intersection(&actions).cloned().collect();
+                    c.ack_deadline = None;
                 }
             }
             Ok(Some(Ok(Message::Ping(_)))) => {
@@ -264,6 +320,20 @@ async fn exchange(
             Err(_) => break,
             _ => {}
         }
+    }
+    if c.offered.len() == ALL_ACTIONS.len()
+        && c.ack_deadline
+            .is_some_and(|deadline| Instant::now() >= deadline)
+    {
+        send(
+            socket,
+            r#"{"type":"hello","version":1,"controls":true}"#.into(),
+        )
+        .await?;
+        c.accepted.clone_from(&c.offered);
+        c.ack_deadline = None;
+        // A v1 hello can take ownership and clear the roster. Replay it on the next poll.
+        c.last = None;
     }
     Ok(Reply {
         connected: true,
@@ -384,7 +454,18 @@ mod tests {
             let contract: serde_json::Value =
                 serde_json::from_str(include_str!("../../plugin/test/fixtures/yaplay-v1.json"))
                     .unwrap();
-            assert_eq!(serde_json::json!(messages), contract["outgoing"]);
+            assert_eq!(
+                messages[0],
+                serde_json::json!({"type":"hello","version":2,"name":"Yapmod Desktop","actions":["leave_call","set_deafen","set_mute"]})
+            );
+            assert_eq!(messages[1..], contract["outgoing"].as_array().unwrap()[1..]);
+            for expected in &contract["outgoing"].as_array().unwrap()[..4] {
+                let text = socket.next().await.unwrap().unwrap().into_text().unwrap();
+                assert_eq!(
+                    &serde_json::from_str::<serde_json::Value>(&text).unwrap(),
+                    expected
+                );
+            }
             for action in contract["controls"].as_array().unwrap() {
                 // Controls may arrive in different polling cycles, especially on CI.
                 tokio::time::sleep(Duration::from_millis(20)).await;
@@ -397,14 +478,7 @@ mod tests {
             assert_eq!(text, EMPTY);
             let _ = socket.next().await;
         });
-        let mut c = Connection {
-            session: "test".into(),
-            port,
-            socket: None,
-            last: None,
-            retry: Instant::now(),
-            seen: Instant::now(),
-        };
+        let mut c = Connection::new("test".into(), port, ALL_ACTIONS.map(String::from).into());
         let first = exchange(
             &mut c,
             snapshot(),
@@ -416,6 +490,7 @@ mod tests {
         .await
         .unwrap();
         assert!(first.connected);
+        c.ack_deadline = Some(Instant::now());
         let mut actions = first.actions;
         let contract: serde_json::Value =
             serde_json::from_str(include_str!("../../plugin/test/fixtures/yaplay-v1.json"))
@@ -440,6 +515,100 @@ mod tests {
             .unwrap();
         assert!(c.socket.is_none() && c.last.is_none());
     }
+    #[tokio::test]
+    async fn v2_renegotiates_and_dispatches_only_acknowledged_offers() {
+        use serde_json::json;
+
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let mut c = Connection::new(
+            "test".into(),
+            listener.local_addr().unwrap().port(),
+            ["set_mute".into(), "leave_call".into()].into(),
+        );
+        let mute = json!({"type":"set_mute","muted":true});
+        let leave = json!({"type":"leave_call"});
+        let partial = c.offered.clone();
+        for (offered, ack, expected) in [
+            (
+                &partial,
+                Some(json!(["set_mute", "set_deafen"])),
+                vec![mute.clone()],
+            ),
+            (&partial, Some(json!(["leave_call"])), vec![leave.clone()]),
+            (&BTreeSet::new(), Some(json!([])), vec![]),
+            (&partial, None, vec![]),
+        ] {
+            c.offered.clone_from(offered);
+            let (done, mut received_pong) = tokio::sync::oneshot::channel();
+            let server = async {
+                let (stream, _) = listener.accept().await.unwrap();
+                let mut socket = accept_async(stream).await.unwrap();
+                let hello = socket.next().await.unwrap().unwrap().into_text().unwrap();
+                assert_eq!(
+                    serde_json::from_str::<serde_json::Value>(&hello).unwrap(),
+                    json!({"type":"hello","version":2,"name":"Yapmod Desktop","actions":offered})
+                );
+                let mut messages = vec![mute.clone(), leave.clone()];
+                if let Some(actions) = &ack {
+                    messages.push(json!({"type":"hello_ack","version":2,"actions":actions}));
+                }
+                messages.extend([
+                    mute.clone(),
+                    json!({"type":"set_deafen","deafened":true}),
+                    leave.clone(),
+                ]);
+                for message in messages {
+                    socket
+                        .send(Message::Text(message.to_string().into()))
+                        .await
+                        .unwrap();
+                }
+                socket.send(Message::Ping(vec![1].into())).await.unwrap();
+                for kind in ["voice_state", "mic_state", "deafen_state"] {
+                    let text = socket.next().await.unwrap().unwrap().into_text().unwrap();
+                    assert_eq!(
+                        serde_json::from_str::<serde_json::Value>(&text).unwrap()["type"],
+                        kind
+                    );
+                }
+                assert!(matches!(
+                    socket.next().await.unwrap().unwrap(),
+                    Message::Pong(_)
+                ));
+                done.send(()).unwrap();
+                let _ = socket.next().await;
+            };
+            let client = async {
+                let mut actions = vec![];
+                while received_pong.try_recv().is_err() {
+                    actions.extend(exchange(&mut c, snapshot(), vec![]).await.unwrap().actions);
+                    if ack.is_none() {
+                        c.ack_deadline = Some(Instant::now());
+                    }
+                }
+                assert_eq!(serde_json::to_value(actions).unwrap(), json!(expected));
+                if ack.is_none() {
+                    assert!(
+                        exchange(&mut c, snapshot(), vec![])
+                            .await
+                            .unwrap()
+                            .actions
+                            .is_empty()
+                    );
+                    assert!(c.accepted.is_empty());
+                } else {
+                    assert!(c.ack_deadline.is_none());
+                }
+                clear(&mut c).await;
+            };
+            tokio::time::timeout(DEADLINE, async {
+                tokio::join!(server, client);
+            })
+            .await
+            .unwrap();
+        }
+    }
+
     #[tokio::test]
     async fn reconnect_resends_current_state_without_replaying_notifications() {
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -466,14 +635,7 @@ mod tests {
                 }
             }
         });
-        let mut c = Connection {
-            session: "test".into(),
-            port,
-            socket: None,
-            last: None,
-            retry: Instant::now(),
-            seen: Instant::now(),
-        };
+        let mut c = Connection::new("test".into(), port, ALL_ACTIONS.map(String::from).into());
         let _ = exchange(
             &mut c,
             snapshot(),

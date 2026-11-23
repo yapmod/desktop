@@ -87,15 +87,37 @@ export function snapshot(store: HostStore, runtime?: Runtime): Snapshot {
 }
 
 export type Action = { type: 'set_mute'; muted: boolean } | { type: 'set_deafen'; deafened: boolean } | { type: 'leave_call' };
+const voiceMethods = {
+  set_mute: 'toggleMute',
+  set_deafen: 'toggleDeafen',
+  leave_call: 'leaveVoice',
+} as const;
+
+function findMethod(runtime: Runtime, method: string) {
+  for (const { exports } of runtime.c.values()) {
+    if (typeof exports?.[method] === 'function') return exports;
+  }
+}
+
+export function availableActions(runtime: Runtime) {
+  return (Object.keys(voiceMethods) as Action['type'][]).filter(action => findMethod(runtime, voiceMethods[action]));
+}
+
 export async function perform(runtime: Runtime, store: HostStore, action: Action) {
   const voice = store.getState().voice;
   if (!voice) return;
-  const api = [...runtime.c.values()].map(module => module.exports).find(value =>
-    typeof value?.toggleMute === 'function' && typeof value.toggleDeafen === 'function' && typeof value.leaveVoice === 'function');
-  if (!api) throw new Error('Yapin voice controls are unavailable.');
-  if (action.type === 'set_mute' && typeof action.muted === 'boolean' && voice.muted !== action.muted) {
-    await (api.toggleMute as () => unknown)();
-  } else if (action.type === 'set_deafen' && typeof action.deafened === 'boolean' && voice.deafened !== action.deafened) {
-    await (api.toggleDeafen as () => unknown)();
-  } else if (action.type === 'leave_call') await (api.leaveVoice as () => unknown)();
+  switch (action.type) {
+    case 'set_mute':
+      if (typeof action.muted !== 'boolean' || voice.muted === action.muted) return;
+      break;
+    case 'set_deafen':
+      if (typeof action.deafened !== 'boolean' || voice.deafened === action.deafened) return;
+      break;
+    case 'leave_call': break;
+    default: return;
+  }
+  const method = voiceMethods[action.type];
+  const api = findMethod(runtime, method);
+  if (!api) throw new Error('Yapin voice control is unavailable.');
+  await (api[method] as () => unknown)();
 }

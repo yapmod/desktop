@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- [Yaplay 1.6](https://github.com/ilyeshdz/yaplay/releases/tag/v1.6.0) now shows Yapmod Desktop by name and offers overlay controls and shortcuts for the voice actions available in Yapin.
+
 ## [1.2.1] — 2026-11-23
 
 ### Fixed

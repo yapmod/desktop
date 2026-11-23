@@ -20,11 +20,14 @@ Each activation has a session ID; stopping an old activation cannot close its re
 
 ## Wire protocol
 
-The existing `voice_state`, `mic_state`, `deafen_state`, and `notification` JSON messages are unchanged. On connection the desktop sends:
+On each WebSocket connection, Desktop introduces itself to [Yaplay 1.6 and later](https://github.com/ilyeshdz/yaplay/blob/v1.6.0/site/content/docs/protocol.mdx#protocol-v2) and immediately sends the current roster, microphone and deafen state. For example, when Yapin exposes only its mute action, Desktop sends the first frame below and Yaplay replies with the second.
 
 ```json
-{"type":"hello","version":1,"controls":true}
+{"type":"hello","version":2,"name":"Yapmod Desktop","actions":["set_mute"]}
+{"type":"hello_ack","version":2,"actions":["set_mute"]}
 ```
+
+Desktop accepts controls present in both lists. An empty offer lets Yaplay show the roster with no call buttons. When Yapin loads additional voice functions, the plugin refreshes the connection with the available actions. Every reconnect negotiates again. On older overlays, Desktop falls back to the v1 hello after 1.5 seconds without an acknowledgement only when all three actions are available, then resends the current state. Partial integrations keep publishing state. Notifications use the same payload across both protocol versions.
 
 New Yaplay builds return only these commands to the latest negotiated control client:
 

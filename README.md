@@ -76,7 +76,7 @@ Yapmod Desktop is licensed under GPL-3.0. The rounded app icon uses the official
 
 Open **Settings → Yapmod → Desktop → Yaplay** and turn on **Connect to Yaplay**. Start [Yaplay](https://github.com/ilyeshdz/yaplay) with its overlay enabled. Both apps use port **8080** by default; enter Yaplay’s port in Desktop settings if you changed it.
 
-The built-in integration forwards your current call roster, display names, speaking activity, mute/deafen state, and notifications created by the desktop notification adapter. The Rust host owns the local WebSocket connection. With a control-capable Yaplay build, its buttons can mute, deafen, or leave your current Yapin call. Older Yaplay versions still display state. Turning off the integration clears the overlay roster and disconnects.
+The built-in integration forwards your current call roster, display names, speaking activity, mute/deafen state, and notifications created by the desktop notification adapter. The Rust host owns the local WebSocket connection. Yaplay 1.6 and later shows **Yapmod Desktop** in **Settings → General**. Its buttons and global shortcuts use the controls available in Yapin. Older overlays still display call state and can use v1 controls when mute, deafen, and leave are all available. Turning off the integration clears the overlay roster and disconnects.
 
 See [the integration notes](docs/yaplay.md) for the protocol, validation, and current testing limitations.
 

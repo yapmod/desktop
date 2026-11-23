@@ -1,7 +1,7 @@
 import { Button, Input, Section, SettingRow, SettingText, Switch } from '@yapmod/ui';
 import { createSignal } from 'solid-js';
 import { type DesktopInfo, type NativeBridge } from '../native';
-import { findStore, getRuntime, perform, snapshot, type Action, type HostStore } from './host';
+import { availableActions, findStore, getRuntime, perform, snapshot, type Action, type HostStore } from './host';
 
 function createConnection(bridge: NativeBridge, setStatus: (value: string) => void) {
   let session = '';
@@ -11,6 +11,7 @@ function createConnection(bridge: NativeBridge, setStatus: (value: string) => vo
   let unsubscribe: (() => void) | undefined;
   let store: HostStore | undefined;
   let activePort = 0;
+  let activeActions: Action['type'][] = [];
   let notifications: { title: string; body: string }[] = [];
   let pending = false;
   let applied = false;
@@ -28,10 +29,12 @@ function createConnection(bridge: NativeBridge, setStatus: (value: string) => vo
         unsubscribe = store.useStore.subscribe(() => { pending = true; });
       }
       const nextPort = Number(yapmod.storage.yaplayPort ?? 8080);
-      if (!session || nextPort !== activePort) {
+      const actions = availableActions(runtime);
+      if (!session || nextPort !== activePort || actions.join() !== activeActions.join()) {
         session = crypto.randomUUID();
         activePort = nextPort;
-        await bridge.invoke('yaplay_start', { session, port: activePort });
+        activeActions = actions;
+        await bridge.invoke('yaplay_start', { session, port: activePort, actions });
         if (stopped) { await bridge.invoke('yaplay_stop', { session }); return; }
       }
       const call = store.getState().voice;
@@ -44,6 +47,7 @@ function createConnection(bridge: NativeBridge, setStatus: (value: string) => vo
         const current = store.getState().voice;
         if (stopped || Number(yapmod.storage.yaplayPort ?? 8080) !== activePort
           || current?.channelId !== call?.channelId || current?.serverId !== call?.serverId) break;
+        if (!actions.includes(action.type)) continue;
         await perform(runtime, store, action);
       }
       applied = true;
