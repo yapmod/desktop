@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
 import * as solid from 'solid-js/dist/solid.js';
-import { snapshot, findStore, perform } from '../src/yaplay/host.ts';
+import { availableActions, snapshot, findStore, perform } from '../src/yaplay/host.ts';
 
 function host() {
   const state = { userId: 'self', voice: { channelId: 'room', serverId: 'server', muted: false, deafened: false },
@@ -41,6 +41,20 @@ test('discovers exports without bundle IDs and invokes only requested voice acti
   await perform(runtime, store, { type: 'leave_call' });
   await perform(runtime, store, { type: 'unknown' });
   assert.deepEqual(calls, ['mute', 'deafen', 'leave']);
+});
+
+test('discovers partial controls as Yapin loads voice modules', async () => {
+  const store = host();
+  const runtime = { c: new Map() };
+  const calls = [];
+  assert.deepEqual(availableActions(runtime), []);
+  runtime.c.set(1, { exports: { toggleMute() { calls.push('mute'); } } });
+  assert.deepEqual(availableActions(runtime), ['set_mute']);
+  await perform(runtime, store, { type: 'set_mute', muted: true });
+  runtime.c.set(2, { exports: { leaveVoice() { calls.push('leave'); } } });
+  assert.deepEqual(availableActions(runtime), ['set_mute', 'leave_call']);
+  await perform(runtime, store, { type: 'leave_call' });
+  assert.deepEqual(calls, ['mute', 'leave']);
 });
 
 test('Desktop settings clean up on toggles and discard controls after switching calls', async () => {
@@ -114,6 +128,7 @@ test('Desktop settings clean up on toggles and discard controls after switching 
   }
   const native = calls.filter(call => call.command.startsWith('yaplay_'));
   assert.deepEqual(native.map(call => call.command), ['yaplay_start', 'yaplay_exchange', 'yaplay_stop', 'yaplay_start', 'yaplay_exchange', 'yaplay_stop']);
+  assert.deepEqual(Array.from(native[0].args.actions), ['set_mute', 'set_deafen', 'leave_call']);
   assert.notEqual(native[0].args.session, native[3].args.session);
 });
 
