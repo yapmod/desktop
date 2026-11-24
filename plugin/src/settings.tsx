@@ -3,7 +3,7 @@ import { type Component, createSignal, onCleanup } from 'solid-js';
 import { AutostartSetting } from './AutostartSetting';
 import { invoke, type DesktopInfo } from './native';
 
-export function DesktopSettings(props: { yaplay?: Component; requestPermission(): Promise<NotificationPermission> }) {
+export function DesktopSettings(props: { appearance?: Component; yaplay?: Component; requestPermission(): Promise<NotificationPermission> }) {
   const [info, setInfo] = createSignal<DesktopInfo>();
   const [busy, setBusy] = createSignal(false);
   const [available, setAvailable] = createSignal<string | null>(null);
@@ -45,6 +45,7 @@ export function DesktopSettings(props: { yaplay?: Component; requestPermission()
 
   return (
     <SettingsPage title="Desktop">
+      {props.appearance && <props.appearance />}
       <Section label="Notifications">
         <SettingRow label="Desktop notifications" hint="Deliver alerts enabled in Yapin to your notification center.">
           <Switch aria-label="Desktop notifications" checked={yapmod.storage.notifications !== false} onChange={changeNotifications} />

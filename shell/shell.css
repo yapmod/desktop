@@ -42,3 +42,4 @@ p { margin: 0; color: #b8b8c2; line-height: 1.5; }
 button:focus-visible { outline: 2px solid #c9b5ff; outline-offset: -2px; }
 
 main[hidden] { display: none; }
+:root:has(main[hidden]) { background: transparent; }

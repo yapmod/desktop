@@ -29,6 +29,10 @@ This permission handling does not establish full voice/video call compatibility.
 
 Closing the main window keeps Yapmod Desktop running in the system tray so it can receive notifications. Use the tray menu to **Open Yapmod Desktop** or **Quit Yapmod Desktop**. On Windows, clicking the tray icon also opens the window; on macOS, the Dock icon restores it. Linux requires a desktop environment with AppIndicator support. If the tray cannot be created, closing the window exits the app.
 
+Open **Settings → Yapmod → Desktop → Appearance** to adjust window opacity (50–100%). Only the chat and navigation backgrounds become translucent. Text, avatars, controls, and modal dialogs keep their normal appearance. Below 100%, **Background blur** softens the desktop behind Yapin by default. Switch it off for clear transparency without changing opacity. Both preferences are remembered; sign-in popups are unaffected.
+
+Blur uses the system material on macOS, Acrylic on Windows, and the blur-behind effect on X11 compositors that advertise it (such as KDE Plasma with blur enabled). The system determines the blur strength. On native Wayland or an unsupported compositor, the blur switch is unavailable; opacity still works where desktop compositing is supported.
+
 The tray menu also shows your call and microphone status, with **Mute microphone** / **Unmute microphone** and **Deafen** / **Undeafen** controls. These work without enabling Yaplay. Microphone controls are disabled while deafened; undeafen first. Controls become unavailable when the desktop plugin is disabled, the page stops responding, or Yapin’s voice integration cannot be discovered.
 
 Choose **Snooze desktop notifications (1 hour)** to temporarily suppress new system alerts, or **Resume desktop notifications** to end the snooze early. Snoozing survives page reloads, ends when the app quits, and does not change Yapin’s notification preferences or Yaplay overlay alerts.

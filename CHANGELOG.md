@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Adjust [background transparency and blur](README.md) in **Settings → Yapmod → Desktop → Appearance** with the [shared Yapmod slider](https://github.com/yapmod/client/pull/124), without fading text, images, or dialogs. Blur follows the system effect where supported.
+
 ### Changed
 
 - [Yaplay 1.6](https://github.com/ilyeshdz/yaplay/releases/tag/v1.6.0) now shows Yapmod Desktop by name and offers overlay controls and shortcuts for the voice actions available in Yapin.

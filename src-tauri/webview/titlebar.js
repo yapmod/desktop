@@ -7,6 +7,8 @@
   if (window[key]) { window[key](); return; }
 
   const style = document.createElement("style");
+  style.id = "yapmod-desktop-appearance";
+  style.dataset.backdrop = "system";
   style.textContent = css;
   document.head.append(style);
   const desktopFrame = platform === "macos" || platform === "windows";

@@ -28,6 +28,14 @@ impl TitlebarLayout {
     pub fn set(&self, page: &Webview, integrated: bool) -> tauri::Result<()> {
         self.0.store(integrated, Ordering::Relaxed);
         let window = page.window();
+        #[cfg(not(target_os = "linux"))]
+        if let Some(shell) = window.get_webview("shell") {
+            if integrated {
+                shell.hide()?;
+            } else {
+                shell.show()?;
+            }
+        }
         self.fit(
             page,
             window.inner_size()?.to_logical(window.scale_factor()?),
