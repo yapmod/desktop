@@ -15,3 +15,37 @@
   object-fit: contain;
   opacity: 1;
 }
+:root[data-yapmod-translucent]:has(body > .app) {
+  contain: style;
+  background: transparent !important;
+}
+:root[data-yapmod-translucent] > body:has(> .app),
+:root[data-yapmod-translucent] > body > .app {
+  background-color: transparent !important;
+}
+:root[data-yapmod-translucent] > body > .app {
+  --yapmod-surface-weight: calc(var(--yapmod-window-opacity) * 100%);
+}
+:root[data-yapmod-translucent] > body > .app > .topbar,
+:root[data-yapmod-translucent] > body > .app > .stage-row > .rail {
+  background-color: color-mix(in srgb, var(--bg-rail) var(--yapmod-surface-weight), transparent) !important;
+}
+:root[data-yapmod-translucent] > body > .app > .stage-row > .stage > .sidebar {
+  background-color: color-mix(in srgb, var(--bg-side) var(--yapmod-surface-weight), transparent) !important;
+}
+:root[data-yapmod-translucent] > body > .app > .stage-row > .stage > .main {
+  background-color: color-mix(in srgb, var(--bg-main) var(--yapmod-surface-weight), transparent) !important;
+}
+:root[data-yapmod-translucent][data-tint] > body > .app {
+  background-size: 0 0 !important;
+  isolation: isolate;
+}
+:root[data-yapmod-translucent][data-tint] > body > .app::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: inherit;
+  opacity: var(--yapmod-window-opacity);
+}

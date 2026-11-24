@@ -17,6 +17,7 @@
     "allow-tray-exchange",
     "allow-tray-stop",
     "allow-desktop-set-badge",
+    "allow-desktop-set-blur",
     "allow-yaplay-start",
     "allow-yaplay-exchange",
     "allow-yaplay-stop",

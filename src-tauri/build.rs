@@ -4,6 +4,7 @@ const COMMANDS: &[&str] = &[
     "tray_exchange",
     "tray_stop",
     "desktop_set_badge",
+    "desktop_set_blur",
     "yaplay_start",
     "yaplay_exchange",
     "yaplay_stop",

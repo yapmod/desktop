@@ -40,6 +40,7 @@ fn set_minimum(window: &Window, minimum: LogicalSize<f64>) -> tauri::Result<()> 
 pub fn create(app: &AppHandle) -> tauri::Result<()> {
     let builder = WindowBuilder::new(app, "main")
         .title("Yapmod Desktop")
+        .transparent(true)
         .inner_size(1150., 760.)
         .prevent_overflow()
         .center();
@@ -53,6 +54,7 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
     set_minimum(&window, LogicalSize::new(560., 420.))?;
     let init = format!("window.yapmodPlatform = '{}';", std::env::consts::OS);
     let shell = WebviewBuilder::new("shell", WebviewUrl::App("index.html".into()))
+        .transparent(true)
         .initialization_script(init)
         .on_new_window(|_, _| NewWindowResponse::Deny);
     window.add_child(shell, LogicalPosition::new(0., 0.), viewport(&window)?)?;
@@ -161,6 +163,7 @@ fn attach_yapin(window: &Window) -> tauri::Result<()> {
         "yapin",
         WebviewUrl::External("about:blank".parse().unwrap()),
     )
+    .transparent(true)
     .initialization_script(format!(
         "({})({:?})",
         include_str!("../webview/badge.js"),

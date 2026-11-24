@@ -7,14 +7,15 @@ import * as solid from 'solid-js/dist/solid.js';
 const source = await readFile(new URL('../dist/plugin.js', import.meta.url), 'utf8');
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 
-function settings(invoke, info = { autostartAvailable: true }) {
+function settings(invoke, info = { autostartAvailable: true }, document, storage = {}) {
   const window = new EventTarget();
+  window.document = document;
   const calls = [];
-  window.__TAURI_INTERNALS__ = { async invoke(command) {
+  window.__TAURI_INTERNALS__ = { async invoke(command, args) {
     if (command === 'desktop_info') return info;
     if (command === 'notification_permission') return 'default';
     calls.push(command);
-    return invoke(command);
+    return invoke(command, args);
   } };
   let render, row, dispose;
   const ui = {
@@ -26,11 +27,12 @@ function settings(invoke, info = { autostartAvailable: true }) {
     },
     SettingText: () => null,
     Switch: props => props,
+    Input: props => props,
     Button: props => props,
   };
   const yapmod = {
     ui, solid, solidWeb: { createComponent: solid.createComponent, memo: solid.createMemo },
-    storage: {}, onDispose: solid.onCleanup, log() {},
+    storage, onDispose: solid.onCleanup, log() {},
     settings: { registerSection(section) { render = section.render; } },
   };
   const controls = solid.createRoot((stop) => {
@@ -40,6 +42,8 @@ function settings(invoke, info = { autostartAvailable: true }) {
   });
   return {
     window, calls, dispose, hint: () => row?.hint,
+    opacity: () => controls.toArray().find(control => control?.className === 'field')?.children[1].children[0],
+    blur: () => controls.toArray().find(control => control?.['aria-label'] === 'Background blur'),
     toggle: () => controls.toArray().find(control => control?.['aria-label'] === 'Launch at login'),
     retry: () => controls.toArray().find(control => control?.children === 'Retry'),
   };
@@ -94,6 +98,60 @@ test('older hosts can open settings without an autostart command', async () => {
   const view = settings(() => assert.fail('unexpected native command'), {});
   await settle();
   assert.equal(view.toggle(), undefined);
+  assert.equal(view.opacity(), undefined);
   assert.deepEqual(view.calls, []);
+  view.dispose();
+});
+
+test('native-shaped opacity slider and independent blur persist and clean up', async () => {
+  const attributes = new Map();
+  const styles = new Map();
+  const document = {
+    getElementById: id => id === 'yapmod-desktop-appearance' && { dataset: { backdrop: 'system' } },
+    createElement: tagName => ({
+      tagName, children: [], append(...nodes) { this.children.push(...nodes); },
+      setAttribute(key, value) { this[key] = value; },
+    }),
+    documentElement: {
+      toggleAttribute: (name, value) => attributes.set(name, value),
+      style: { setProperty: (key, value) => styles.set(key, value), removeProperty: key => styles.delete(key) },
+    },
+  };
+  const storage = { windowOpacity: 5 };
+  const transitions = [];
+  const activate = () => settings((command, { enabled }) => {
+    assert.equal(command, 'desktop_set_blur');
+    transitions.push(enabled);
+    return true;
+  }, {}, document, storage);
+  let view = activate();
+  function slide(value) {
+    const input = view.opacity();
+    input.value = value;
+    input.oninput();
+  }
+  await settle();
+  assert.equal(view.blur().checked, true);
+  assert.equal(view.opacity().value, '100');
+  slide('78');
+  await settle();
+  assert.deepEqual(transitions, [false, true]);
+  slide('0');
+  view.blur().onChange(false);
+  await settle();
+  assert.equal(storage.windowBlur, false);
+  assert.equal(transitions.at(-1), false);
+  assert.equal(storage.windowOpacity, 78);
+  assert.equal(styles.get('--yapmod-window-opacity'), '0.78');
+  view.dispose();
+  assert.equal(attributes.get('data-yapmod-translucent'), false);
+  assert.equal(styles.size, 0);
+  view = activate();
+  assert.equal(view.opacity().value, '78');
+  assert.equal(attributes.get('data-yapmod-translucent'), true);
+  assert.equal(view.blur().checked, false);
+  slide('100');
+  assert.equal(styles.size, 0);
+  assert.equal(storage.windowOpacity, 100);
   view.dispose();
 });

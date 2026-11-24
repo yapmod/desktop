@@ -5709,6 +5709,8 @@ version = "1.2.1"
 dependencies = [
  "base64 0.22.1",
  "futures-util",
+ "gdkx11",
+ "gtk",
  "minisign-verify",
  "objc2",
  "objc2-web-kit",
@@ -5728,6 +5730,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "tokio-tungstenite",
+ "window-vibrancy",
 ]
 
 [[package]]
