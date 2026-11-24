@@ -1,13 +1,24 @@
 import { Section, SettingRow, Switch } from '@yapmod/ui';
-import { createEffect, createSignal } from 'solid-js';
+import { createSignal, type Component } from 'solid-js';
 import { invoke } from './native';
 
 const minimum = 50;
+
+type OpacitySlider = Component<{
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  formatValue(value: number): string;
+  onChange(value: number): void;
+}>;
 
 export function installAppearance() {
   const document = window.document;
   const host = document?.getElementById('yapmod-desktop-appearance');
   if (!host) return;
+  const { Slider } = yapmod.ui as typeof yapmod.ui & { Slider?: OpacitySlider };
+  if (!Slider) return;
   const root = document.documentElement;
   const saved = yapmod.storage.windowOpacity;
   const [opacity, setOpacity] = createSignal(typeof saved === 'number' && Number.isInteger(saved)
@@ -49,41 +60,16 @@ export function installAppearance() {
     clear();
   });
 
-  function change(raw: string) {
-    const value = Number(raw);
+  function change(value: number) {
     if (!Number.isInteger(value) || value < minimum || value > 100) return;
     setOpacity(value);
     apply(value);
     yapmod.storage.windowOpacity = value;
   }
 
-  function OpacityField() {
-    const field = document.createElement('div');
-    field.className = 'field';
-    const label = document.createElement('label');
-    label.textContent = 'Window opacity';
-    const slider = document.createElement('div');
-    slider.className = 'dens-slider';
-    const input = document.createElement('input');
-    input.id = label.htmlFor = 'yapmod-desktop-opacity';
-    input.type = 'range';
-    input.min = String(minimum);
-    input.max = '100';
-    input.step = '1';
-    input.oninput = () => change(input.value);
-    const readout = document.createElement('b');
-    createEffect(() => {
-      input.value = String(opacity());
-      readout.textContent = `${opacity()}%`;
-      input.setAttribute('aria-valuetext', readout.textContent);
-    });
-    slider.append(input, readout);
-    field.append(label, slider);
-    return field;
-  }
-
   return () => <Section label="Appearance">
-    <OpacityField />
+    <Slider label="Window opacity" min={minimum} max={100} value={opacity()}
+      formatValue={value => `${value}%`} onChange={change} />
     <SettingRow label="Background blur" hint={available()
       ? 'Soften what’s behind the window when opacity is below 100%.'
       : 'Background blur is unavailable on this desktop.'}>

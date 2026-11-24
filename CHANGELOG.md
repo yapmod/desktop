@@ -4,7 +4,7 @@
 
 ### Added
 
-- Adjust [background transparency and blur](README.md) in **Settings → Yapmod → Desktop → Appearance** without fading text, images, or dialogs. Blur follows the system effect where supported.
+- Adjust [background transparency and blur](README.md) in **Settings → Yapmod → Desktop → Appearance** with the [shared Yapmod slider](https://github.com/yapmod/client/pull/124), without fading text, images, or dialogs. Blur follows the system effect where supported.
 
 ### Changed
 

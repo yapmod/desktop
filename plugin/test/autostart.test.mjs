@@ -7,7 +7,7 @@ import * as solid from 'solid-js/dist/solid.js';
 const source = await readFile(new URL('../dist/plugin.js', import.meta.url), 'utf8');
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 
-function settings(invoke, info = { autostartAvailable: true }, document, storage = {}) {
+function settings(invoke, info = { autostartAvailable: true }, document, storage = {}, sliderAvailable = true) {
   const window = new EventTarget();
   window.document = document;
   const calls = [];
@@ -27,7 +27,7 @@ function settings(invoke, info = { autostartAvailable: true }, document, storage
     },
     SettingText: () => null,
     Switch: props => props,
-    Input: props => props,
+    Slider: sliderAvailable ? props => props : undefined,
     Button: props => props,
   };
   const yapmod = {
@@ -42,7 +42,7 @@ function settings(invoke, info = { autostartAvailable: true }, document, storage
   });
   return {
     window, calls, dispose, hint: () => row?.hint,
-    opacity: () => controls.toArray().find(control => control?.className === 'field')?.children[1].children[0],
+    opacity: () => controls.toArray().find(control => control?.label === 'Window opacity'),
     blur: () => controls.toArray().find(control => control?.['aria-label'] === 'Background blur'),
     toggle: () => controls.toArray().find(control => control?.['aria-label'] === 'Launch at login'),
     retry: () => controls.toArray().find(control => control?.children === 'Retry'),
@@ -103,15 +103,19 @@ test('older hosts can open settings without an autostart command', async () => {
   view.dispose();
 });
 
-test('native-shaped opacity slider and independent blur persist and clean up', async () => {
+test('older clients without the shared slider leave appearance untouched', () => {
+  const document = { getElementById: () => ({ dataset: { backdrop: 'system' } }) };
+  const view = settings(() => assert.fail('unexpected command'), {}, document, { windowOpacity: 75 }, false);
+  assert.equal(view.opacity(), undefined);
+  assert.equal(view.blur(), undefined);
+  view.dispose();
+});
+
+test('shared opacity slider and independent blur persist and clean up', async () => {
   const attributes = new Map();
   const styles = new Map();
   const document = {
     getElementById: id => id === 'yapmod-desktop-appearance' && { dataset: { backdrop: 'system' } },
-    createElement: tagName => ({
-      tagName, children: [], append(...nodes) { this.children.push(...nodes); },
-      setAttribute(key, value) { this[key] = value; },
-    }),
     documentElement: {
       toggleAttribute: (name, value) => attributes.set(name, value),
       style: { setProperty: (key, value) => styles.set(key, value), removeProperty: key => styles.delete(key) },
@@ -126,17 +130,16 @@ test('native-shaped opacity slider and independent blur persist and clean up', a
   }, {}, document, storage);
   let view = activate();
   function slide(value) {
-    const input = view.opacity();
-    input.value = value;
-    input.oninput();
+    view.opacity().onChange(value);
   }
   await settle();
   assert.equal(view.blur().checked, true);
-  assert.equal(view.opacity().value, '100');
-  slide('78');
+  assert.equal(view.opacity().value, 100);
+  assert.equal(view.opacity().formatValue(78), '78%');
+  slide(78);
   await settle();
   assert.deepEqual(transitions, [false, true]);
-  slide('0');
+  slide(0);
   view.blur().onChange(false);
   await settle();
   assert.equal(storage.windowBlur, false);
@@ -147,10 +150,10 @@ test('native-shaped opacity slider and independent blur persist and clean up', a
   assert.equal(attributes.get('data-yapmod-translucent'), false);
   assert.equal(styles.size, 0);
   view = activate();
-  assert.equal(view.opacity().value, '78');
+  assert.equal(view.opacity().value, 78);
   assert.equal(attributes.get('data-yapmod-translucent'), true);
   assert.equal(view.blur().checked, false);
-  slide('100');
+  slide(100);
   assert.equal(styles.size, 0);
   assert.equal(storage.windowOpacity, 100);
   view.dispose();
