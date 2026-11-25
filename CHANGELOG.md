@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-11-25
+
 ### Added
 
 - Optionally load the [Yap++ web integration](https://github.com/salami-reborn/yapplusplus) from **Settings → Yapmod → Desktop** alongside the official Yapmod client.
