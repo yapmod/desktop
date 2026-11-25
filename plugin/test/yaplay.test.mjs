@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
 import * as solid from 'solid-js/dist/solid.js';
 import { availableActions, snapshot, findStore, perform } from '../src/yaplay/host.ts';
+import { YAPPLUSPLUS_SCRIPT_URL } from '../src/yapplusplus/loader.ts';
 
 function host() {
   const state = { userId: 'self', voice: { channelId: 'room', serverId: 'server', muted: false, deafened: false },
@@ -68,6 +69,8 @@ test('Desktop settings clean up on toggles and discard controls after switching 
     leaveVoice() { voiceActions.push('leave'); },
   } }]]) };
   const window = new EventTarget();
+  let reloads = 0;
+  window.location = { reload() { reloads++; } };
   const modules = new Map();
   window.TURBOPACK = { push(chunk) {
     if (typeof chunk[2] === 'function') modules.set(chunk[1], chunk[2]);
@@ -84,6 +87,17 @@ test('Desktop settings clean up on toggles and discard controls after switching 
     }
   } };
   const timers = new Set();
+  const scripts = [];
+  const document = {
+    createElement() { return { remove() { this.removed = true; } }; },
+    head: { append(script) { scripts.push(script); } },
+  };
+  const fetches = [];
+  const fetch = async (url, options) => {
+    fetches.push([url, options]);
+    return { ok: true, text: async () => 'window.yapplusplusLoaded = true;' };
+  };
+  const objectURLs = { createObjectURL: () => 'blob:yapplusplus-test', revokeObjectURL() {} };
   const registrations = [];
   const sections = [];
   const storage = {};
@@ -98,7 +112,7 @@ test('Desktop settings clean up on toggles and discard controls after switching 
   };
   const controls = solid.createRoot(stop => {
     dispose = stop;
-    const register = runInNewContext(source, { window, EventTarget, Event, CustomEvent, crypto: globalThis.crypto, setTimeout, clearTimeout,
+    const register = runInNewContext(source, { window, document, fetch, URL: objectURLs, Blob, AbortController, EventTarget, Event, CustomEvent, crypto: globalThis.crypto, setTimeout, clearTimeout,
       setInterval(fn) { timers.add(fn); return fn; }, clearInterval(fn) { timers.delete(fn); } });
     register({ registerClientPlugin(plugin) {
       registrations.push(plugin.id);
@@ -109,10 +123,13 @@ test('Desktop settings clean up on toggles and discard controls after switching 
   });
   const settle = () => new Promise(resolve => setImmediate(resolve));
   const toggle = () => controls.toArray().find(control => control?.['aria-label'] === 'Connect to Yaplay');
+  const yapplusplusToggle = () => controls.toArray().find(control => control?.['aria-label'] === 'Enable Yap++');
   await settle();
   assert.deepEqual(registrations, ['client:yapmod-desktop']);
   assert.deepEqual(sections.map(section => section.id), ['desktop']);
   assert.equal(toggle().checked, false);
+  assert.equal(yapplusplusToggle().checked, false);
+  assert.deepEqual(fetches, []);
   assert.equal(calls.some(call => call.command.startsWith('yaplay_')), false);
   for (let activation = 0; activation < 2; activation++) {
     toggle().onChange(true);
@@ -121,8 +138,22 @@ test('Desktop settings clean up on toggles and discard controls after switching 
     assert.deepEqual(voiceActions, []);
     assert.equal(subscriptions, 1);
     assert.equal(timers.size, 1);
-    if (activation === 0) toggle().onChange(false);
-    else dispose();
+    if (activation === 0) {
+      toggle().onChange(false);
+
+      yapplusplusToggle().onChange(true);
+      await settle();
+      assert.equal(storage.yapplusplusEnabled, true);
+      assert.equal(fetches[0][0], YAPPLUSPLUS_SCRIPT_URL);
+      assert.equal(scripts.length, 1);
+      scripts[0].onload();
+      yapplusplusToggle().onChange(false);
+      assert.equal(storage.yapplusplusEnabled, false);
+      assert.equal(reloads, 1);
+      assert.equal(scripts[0].removed, true);
+    } else {
+      dispose();
+    }
     assert.equal(subscriptions, 0);
     assert.equal(timers.size, 0);
   }
@@ -130,6 +161,7 @@ test('Desktop settings clean up on toggles and discard controls after switching 
   assert.deepEqual(native.map(call => call.command), ['yaplay_start', 'yaplay_exchange', 'yaplay_stop', 'yaplay_start', 'yaplay_exchange', 'yaplay_stop']);
   assert.deepEqual(Array.from(native[0].args.actions), ['set_mute', 'set_deafen', 'leave_call']);
   assert.notEqual(native[0].args.session, native[3].args.session);
+
 });
 
 

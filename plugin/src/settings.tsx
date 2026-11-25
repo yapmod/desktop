@@ -3,7 +3,7 @@ import { type Component, createSignal, onCleanup } from 'solid-js';
 import { AutostartSetting } from './AutostartSetting';
 import { invoke, type DesktopInfo } from './native';
 
-export function DesktopSettings(props: { appearance?: Component; yaplay?: Component; requestPermission(): Promise<NotificationPermission> }) {
+export function DesktopSettings(props: { appearance?: Component; yaplay?: Component; yapplusplus?: Component; requestPermission(): Promise<NotificationPermission> }) {
   const [info, setInfo] = createSignal<DesktopInfo>();
   const [busy, setBusy] = createSignal(false);
   const [available, setAvailable] = createSignal<string | null>(null);
@@ -53,6 +53,7 @@ export function DesktopSettings(props: { appearance?: Component; yaplay?: Compon
       </Section>
       {info()?.autostartAvailable && <AutostartSetting />}
       {props.yaplay && <props.yaplay />}
+      {props.yapplusplus && <props.yapplusplus />}
       <Section label="Software">
         <SettingText label="Desktop version" value={info()?.version ?? '—'} />
         <SettingText label="Client version" value={window.YapmodClient?.version ?? '—'} />
